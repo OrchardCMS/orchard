@@ -65,5 +65,5 @@ jobs:
           if ($gitStatus)
           {
             throw ("Client-side assets are not up-to-date. Please run 'gulp rebuild' and commit the changes.`n" +
-              [System.String]::Join([System.Environment]::NewLine, (git status --porcelain)))
+              [System.String]::Join([System.Environment]::NewLine, $gitStatus))
           }
