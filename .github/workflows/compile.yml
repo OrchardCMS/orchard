@@ -61,6 +61,7 @@ jobs:
         run: |
           gulp rebuild
 
+          git add . # To make line ending changes "disappear".
           $gitStatus = (git status --porcelain)
           if ($gitStatus)
           {
