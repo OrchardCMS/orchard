@@ -47,11 +47,8 @@ jobs:
         with:
           node-version: '7'
 
-      - name: Rebuild client-side assets
-        run: |
-          # To not hang up on recompiled assets changing only in their line endings.
-          git config core.autocrlf true
-          
+      - name: Setup NPM packages
+        run: |          
           cd src
           npm install --loglevel warn
 
@@ -59,6 +56,8 @@ jobs:
           $gulpVersion = (Get-Content Package.json -Raw | ConvertFrom-Json).devDependencies.gulp
           Start-Process npm -NoNewWindow -Wait -ArgumentList "install gulp@$gulpVersion -g --loglevel warn"
 
+      - name: Rebuild client-side assets
+        run: |
           gulp rebuild
 
           $gitStatus = (git status --porcelain)
