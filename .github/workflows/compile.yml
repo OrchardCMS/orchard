@@ -48,11 +48,15 @@ jobs:
 
       - name: Rebuild client-side assets
         run: |
+          # To not hang up on recompiled assets changing only in their line endings.
+          git config core.autocrlf true
+          
           cd src
-          npm install
+          npm install --loglevel warn
 
+          # Install gulp globally to be able to run the rebuild task, using the same version as in the project.
           $gulpVersion = (Get-Content Package.json -Raw | ConvertFrom-Json).devDependencies.gulp
-          Start-Process npm -NoNewWindow -Wait -ArgumentList "install gulp@$gulpVersion -g"
+          Start-Process npm -NoNewWindow -Wait -ArgumentList "install gulp@$gulpVersion -g --loglevel warn"
 
           gulp rebuild
 
