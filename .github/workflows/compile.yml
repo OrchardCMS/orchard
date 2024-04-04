@@ -9,13 +9,34 @@ on:
       - 1.10.x
 
 jobs:
-  compile:
-    name: Compile
+  compile-dotnet:
+    name: Compile .NET solution
     defaults:
       run:
         shell: pwsh
     runs-on: windows-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4.1.1
 
+      - name: Restore NuGet packages
+        run: nuget restore src/Orchard.sln
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Compile
+        run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:MvcBuildViews=true /p:TreatWarningsAsErrors=true -WarnAsError
+
+      - name: Test
+        run: msbuild Orchard.proj /m /v:minimal /t:Test
+
+  compile-node:
+    name: Compile client-side assets
+    defaults:
+      run:
+        shell: pwsh
+    runs-on: windows-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v4.1.1
@@ -27,22 +48,17 @@ jobs:
 
       - name: Rebuild client-side assets
         run: |
+          cd src
           npm install
-          npm run rebuild
 
-          if (git status)
+          $gulpVersion = (Get-Content Package.json -Raw | ConvertFrom-Json).devDependencies.gulp
+          Start-Process npm -NoNewWindow -Wait -ArgumentList "install gulp@$gulpVersion -g"
+
+          gulp rebuild
+
+          $gitStatus = (git status --porcelain)
+          if ($gitStatus)
           {
-            throw 'Client-side assets are not up-to-date. Please run "npm run rebuild" and commit the changes.'
+            throw ("Client-side assets are not up-to-date. Please run 'gulp rebuild' and commit the changes.`n" +
+              [System.String]::Join([System.Environment]::NewLine, (git status --porcelain)))
           }
-
-      # - name: Restore NuGet packages
-      #   run: nuget restore src/Orchard.sln
-
-      # - name: Add msbuild to PATH
-      #   uses: microsoft/setup-msbuild@v2
-
-      # - name: Compile
-      #   run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:MvcBuildViews=true /p:TreatWarningsAsErrors=true -WarnAsError
-
-      # - name: Test
-      #   run: msbuild Orchard.proj /m /v:minimal /t:Test
