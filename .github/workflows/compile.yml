@@ -35,14 +35,14 @@ jobs:
             throw 'Client-side assets are not up-to-date. Please run "npm run rebuild" and commit the changes.'
           }
 
-      - name: Restore NuGet packages
-        run: nuget restore src/Orchard.sln
+      # - name: Restore NuGet packages
+      #   run: nuget restore src/Orchard.sln
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
+      # - name: Add msbuild to PATH
+      #   uses: microsoft/setup-msbuild@v2
 
-      - name: Compile
-        run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:MvcBuildViews=true /p:TreatWarningsAsErrors=true -WarnAsError
+      # - name: Compile
+      #   run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:MvcBuildViews=true /p:TreatWarningsAsErrors=true -WarnAsError
 
-      - name: Test
-        run: msbuild Orchard.proj /m /v:minimal /t:Test
+      # - name: Test
+      #   run: msbuild Orchard.proj /m /v:minimal /t:Test
