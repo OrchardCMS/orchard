@@ -27,7 +27,7 @@ namespace Orchard.FileSystems.Media {
                 appPath = HostingEnvironment.ApplicationVirtualPath;
             }
             if (!appPath.EndsWith("/"))
-                appPath = appPath + '/';
+                appPath += '/';
             if (!appPath.StartsWith("/"))
                 appPath = '/' + appPath;
 
@@ -39,21 +39,21 @@ namespace Orchard.FileSystems.Media {
 
         public Localizer T { get; set; }
 
-        public int MaxPathLength {
-            get; set;
-            // The public setter allows injecting this from Sites.MyTenant.Config or Sites.config, by using
-            // an AutoFac component:
-            /*
-             <component instance-scope="per-lifetime-scope"
-                type="Orchard.FileSystems.Media.FileSystemStorageProvider, Orchard.Framework"
-                service="Orchard.FileSystems.Media.IStorageProvider">
+        /// <summary>
+        /// The public setter allows injecting this from Sites.MyTenant.Config or Sites.config, by using an AutoFac
+        /// component. See the example below.
+        /// </summary>
+        /*
+         <component
+            instance-scope="per-lifetime-scope"
+            service="Orchard.FileSystems.Media.IStorageProvider"
+            type="Orchard.FileSystems.Media.FileSystemStorageProvider, Orchard.Framework">
                 <properties>
                     <property name="MaxPathLength" value="500" />
                 </properties>
             </component>
-
-             */
-        }
+         */
+        public int MaxPathLength { get; set; }
 
         /// <summary>
         /// Maps a relative path into the storage path.
