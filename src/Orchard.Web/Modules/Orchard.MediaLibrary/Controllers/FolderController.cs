@@ -35,7 +35,7 @@ namespace Orchard.MediaLibrary.Controllers {
         public ActionResult Create(string folderPath) {
             if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath) || _mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, folderPath))) {
                 Services.Notifier.Error(T("Couldn't create media folder"));
-                return RedirectToAction("Index", "Admin", new { area = "Orchard.MediaLibrary", folderPath = folderPath });
+                return RedirectToAction("Index", "Admin", new { area = "Orchard.MediaLibrary", folderPath });
             }
 
             // If the user is trying to access a folder above his boundaries, redirect him to his home folder
@@ -82,7 +82,7 @@ namespace Orchard.MediaLibrary.Controllers {
         public ActionResult Edit(string folderPath) {
             if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, folderPath) || _mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, folderPath))) {
                 Services.Notifier.Error(T("Couldn't edit media folder"));
-                return RedirectToAction("Index", "Admin", new { area = "Orchard.MediaLibrary", folderPath = folderPath });
+                return RedirectToAction("Index", "Admin", new { area = "Orchard.MediaLibrary", folderPath });
             }
 
             if (!_mediaLibraryService.CanManageMediaFolder(folderPath)) {
@@ -118,7 +118,7 @@ namespace Orchard.MediaLibrary.Controllers {
             var viewModel = new MediaManagerFolderEditViewModel();
             UpdateModel(viewModel);
 
-            if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, viewModel.FolderPath) 
+            if (!(_mediaLibraryService.CheckMediaFolderPermission(Permissions.ImportMediaContent, viewModel.FolderPath)
                 || _mediaLibraryService.CheckMediaFolderPermission(Permissions.EditMediaContent, viewModel.FolderPath))) {
                 return new HttpUnauthorizedResult();
             }
@@ -185,7 +185,7 @@ namespace Orchard.MediaLibrary.Controllers {
                 // don't try to rename the file if there is no associated media file
                 if (!string.IsNullOrEmpty(media.FileName)) {
                     // check permission on source folder
-                    if(!_mediaLibraryService.CheckMediaFolderPermission(Permissions.DeleteMediaContent, media.FolderPath)) {
+                    if (!_mediaLibraryService.CheckMediaFolderPermission(Permissions.DeleteMediaContent, media.FolderPath)) {
                         return new HttpUnauthorizedResult();
                     }
 

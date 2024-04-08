@@ -143,10 +143,10 @@ namespace Orchard.Azure.Services.FileSystems {
             }
 
             return BlobClient.ListBlobs(prefix)
-                        .OfType<CloudBlockBlob>()
-                        .Where(blobItem => !blobItem.Uri.AbsoluteUri.EndsWith(FolderEntry))
-                        .Select(blobItem => new AzureBlobFileStorage(blobItem, _absoluteRoot))
-                        .ToArray();
+                .OfType<CloudBlockBlob>()
+                .Where(blobItem => !blobItem.Uri.AbsoluteUri.EndsWith(FolderEntry))
+                .Select(blobItem => new AzureBlobFileStorage(blobItem, _absoluteRoot))
+                .ToArray();
         }
 
         public IEnumerable<IStorageFolder> ListFolders(string path) {
@@ -419,11 +419,12 @@ namespace Orchard.Azure.Services.FileSystems {
                 long size = 0;
 
                 foreach (var blobItem in directoryBlob.ListBlobs()) {
-                    if (blobItem is CloudBlockBlob)
-                        size += ((CloudBlockBlob)blobItem).Properties.Length;
-
-                    if (blobItem is CloudBlobDirectory)
-                        size += GetDirectorySize((CloudBlobDirectory)blobItem);
+                    if (blobItem is CloudBlockBlob blob) {
+                        size += blob.Properties.Length;
+                    }
+                    else if (blobItem is CloudBlobDirectory directory) {
+                        size += GetDirectorySize(directory);
+                    }
                 }
 
                 return size;

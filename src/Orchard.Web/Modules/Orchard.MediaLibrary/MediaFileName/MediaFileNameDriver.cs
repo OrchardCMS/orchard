@@ -7,8 +7,7 @@ using Orchard.MediaLibrary.Services;
 using Orchard.Security;
 using Orchard.UI.Notify;
 
-namespace Orchard.MediaLibrary.MediaFileName
-{
+namespace Orchard.MediaLibrary.MediaFileName {
     public class MediaFileNameDriver : ContentPartDriver<MediaPart> {
         private readonly IAuthenticationService _authenticationService;
         private readonly IAuthorizationService _authorizationService;
