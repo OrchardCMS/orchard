@@ -67,8 +67,8 @@ namespace Orchard.MediaLibrary.MediaFileName
                                 catch (OrchardException) {
                                     updater.AddModelError("MediaFileNameEditorSettings.FileName", T("Unable to rename file. Invalid Windows file path."));
                                 }
-                                catch (Exception) {
-                                    updater.AddModelError("MediaFileNameEditorSettings.FileName", T("Unable to rename file"));
+                                catch (Exception ex) {
+                                    updater.AddModelError("MediaFileNameEditorSettings.FileName", T("Unable to rename file: {0}", ex.Message));
                                 }
                             }
                         }

@@ -21,7 +21,6 @@ namespace Orchard.MediaLibrary.Services {
         private readonly IStorageProvider _storageProvider;
         private readonly IEnumerable<IMediaFactorySelector> _mediaFactorySelectors;
         private readonly IMediaFolderProvider _mediaFolderProvider;
-        private static char[] HttpUnallowed = new char[] { '<', '>', '*', '%', '&', ':', '\\', '?', '#' };
 
         public MediaLibraryService(
             IOrchardServices orchardServices,
@@ -145,12 +144,6 @@ namespace Orchard.MediaLibrary.Services {
         }
 
         public string GetUniqueFilename(string folderPath, string filename) {
-
-            // remove any char which is unallowed in an HTTP request
-            foreach (var unallowedChar in HttpUnallowed) {
-                filename = filename.Replace(unallowedChar.ToString(), "");
-            }
-
             // compute a unique filename
             var uniqueFilename = filename;
             var index = 1;

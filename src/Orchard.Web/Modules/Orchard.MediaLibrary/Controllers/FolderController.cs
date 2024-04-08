@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Web.Mvc;
 using Orchard.ContentManagement;
 using Orchard.Localization;
@@ -69,14 +68,8 @@ namespace Orchard.MediaLibrary.Controllers {
             }
 
             try {
-                bool valid = String.IsNullOrWhiteSpace(viewModel.Name) || Regex.IsMatch(viewModel.Name, @"^[^:?#\[\]@!$&'()*+,.;=\s\""\<\>\\\|%]+$");
-                if (!valid) {
-                    throw new ArgumentException(T("Folder contains invalid characters").ToString());
-                }
-                else {
-                    _mediaLibraryService.CreateFolder(viewModel.FolderPath, viewModel.Name);
-                    Services.Notifier.Information(T("Media folder created"));
-                }
+                _mediaLibraryService.CreateFolder(viewModel.FolderPath, viewModel.Name);
+                Services.Notifier.Information(T("Media folder created"));
             }
             catch (ArgumentException argumentException) {
                 Services.Notifier.Error(T("Creating Folder failed: {0}", argumentException.Message));
@@ -136,14 +129,8 @@ namespace Orchard.MediaLibrary.Controllers {
             }
 
             try {
-                bool valid = String.IsNullOrWhiteSpace(viewModel.Name) || Regex.IsMatch(viewModel.Name, @"^[^:?#\[\]@!$&'()*+,.;=\s\""\<\>\\\|%]+$");
-                if (!valid) {
-                    throw new ArgumentException(T("Folder contains invalid characters").ToString());
-                }
-                else {
-                    _mediaLibraryService.RenameFolder(viewModel.FolderPath, viewModel.Name);
-                    Services.Notifier.Information(T("Media folder renamed"));
-                }
+                _mediaLibraryService.RenameFolder(viewModel.FolderPath, viewModel.Name);
+                Services.Notifier.Information(T("Media folder renamed"));
             }
             catch (Exception exception) {
                 Services.Notifier.Error(T("Editing Folder failed: {0}", exception.Message));
