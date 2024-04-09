@@ -19,13 +19,16 @@ using Orchard.UI.Notify;
 namespace Orchard.Taxonomies.Drivers {
     public class TaxonomyFieldDriver : ContentFieldDriver<TaxonomyField> {
         private readonly ITaxonomyService _taxonomyService;
+        private readonly ITaxonomySource _taxonomySource;
         public IOrchardServices Services { get; set; }
 
         public TaxonomyFieldDriver(
             IOrchardServices services, 
             ITaxonomyService taxonomyService,
-            IRepository<TermContentItem> repository) {
+            IRepository<TermContentItem> repository,
+             ITaxonomySource taxonomySource) {
             _taxonomyService = taxonomyService;
+            _taxonomySource = taxonomySource;
             Services = services;
             T = NullLocalizer.Instance;
         }
@@ -63,7 +66,7 @@ namespace Orchard.Taxonomies.Drivers {
         protected override DriverResult Editor(ContentPart part, TaxonomyField field, IUpdateModel updater, dynamic shapeHelper) {
             // Initializing viewmodel using the terms that are already selected to prevent loosing them when updating an editor group this field isn't displayed in.
             var appliedTerms = GetAppliedTerms(part, field, VersionOptions.Latest).ToList();
-            var viewModel = new TaxonomyFieldViewModel { Terms = appliedTerms.Select(t => t.CreateTermEntry()).ToList() };
+            var viewModel = new TaxonomyFieldViewModel { Terms = appliedTerms.Select(t => t.CreateTermEntry()).Where(te => !te.HasDraft).ToList() };
             foreach (var item in viewModel.Terms) item.IsChecked = true;
             
             if (updater.TryUpdateModel(viewModel, GetPrefix(field, part), null, null)) {
@@ -74,7 +77,7 @@ namespace Orchard.Taxonomies.Drivers {
 
                 var settings = field.PartFieldDefinition.Settings.GetModel<TaxonomyFieldSettings>();
                 if (settings.Required && !checkedTerms.Any()) {
-                    updater.AddModelError(GetPrefix(field, part), T("The field {0} is mandatory.", T(field.DisplayName)));
+                    updater.AddModelError(GetPrefix(field, part), T("The {0} field is required.", T(field.DisplayName)));
                 }
                 else
                     _taxonomyService.UpdateTerms(part.ContentItem, checkedTerms, field.Name);
@@ -86,15 +89,39 @@ namespace Orchard.Taxonomies.Drivers {
         private ContentShapeResult BuildEditorShape(ContentPart part, TaxonomyField field, dynamic shapeHelper, TaxonomyFieldViewModel appliedViewModel = null) {
             return ContentShape("Fields_TaxonomyField_Edit", GetDifferentiator(field, part), () => {
                 var settings = field.PartFieldDefinition.Settings.GetModel<TaxonomyFieldSettings>();
-                var appliedTerms = GetAppliedTerms(part, field, VersionOptions.Latest).ToDictionary(t => t.Id, t => t);
-                var taxonomy = _taxonomyService.GetTaxonomyByName(settings.Taxonomy);
+                var taxonomy = _taxonomySource
+                    .GetTaxonomy(settings.Taxonomy, part.ContentItem);
+                // if we are in the POST for an update/create, we can skip fetching stuff from the db
+                // because we can get the applied terms from the view model.
+                var appliedTerms = appliedViewModel == null
+                    ? GetAppliedTerms(part, field, VersionOptions.Latest)
+                        .ToDictionary(t => t.Id, t => t)
+                    : appliedViewModel.Terms
+                        // only selected ones
+                        .Where(t => t.IsChecked)
+                        .ToDictionary(t =>
+                            // the key is the term's Id
+                            t.Id,
+                            // the value is the TermPart, that will be null if there was
+                            // an error during update (such as validation errors)
+                            t => t.ContentItem == null
+                                ? GetOrCreateTerm(t, taxonomy.Id, field)
+                                : t.ContentItem.As<TermPart>());
                 var terms = taxonomy != null && !settings.Autocomplete
-                    ? _taxonomyService.GetTerms(taxonomy.Id).Where(t => !string.IsNullOrWhiteSpace(t.Name)).Select(t => t.CreateTermEntry()).ToList()
+                    ? _taxonomyService
+                        .GetTerms(taxonomy.Id)
+                        .Where(t => !string.IsNullOrWhiteSpace(t.Name))
+                        .Select(t => t.CreateTermEntry())
+                        .Where(te => !te.HasDraft)
+                        .ToList()
                     : new List<TermEntry>(0);
 
                 // Ensure the modified taxonomy items are not lost if a model validation error occurs
                 if (appliedViewModel != null) {
-                    terms.ForEach(t => t.IsChecked = appliedViewModel.Terms.Any(at => at.Id == t.Id && at.IsChecked) || t.Id == appliedViewModel.SingleTermId);
+                    terms
+                        .ForEach(t => t.IsChecked =
+                            appliedViewModel.Terms.Any(at => at.Id == t.Id && at.IsChecked)
+                            || t.Id == appliedViewModel.SingleTermId);
                 }
                 else {
                     terms.ForEach(t => t.IsChecked = appliedTerms.ContainsKey(t.Id));
@@ -106,7 +133,9 @@ namespace Orchard.Taxonomies.Drivers {
                     Terms = terms,
                     SelectedTerms = appliedTerms.Select(t => t.Value),
                     Settings = settings,
-                    SingleTermId = appliedTerms.Select(t => t.Key).FirstOrDefault(),
+                    SingleTermId = appliedViewModel != null
+                        ? appliedViewModel.SingleTermId
+                        : appliedTerms.Select(t => t.Key).FirstOrDefault(),
                     TaxonomyId = taxonomy != null ? taxonomy.Id : 0,
                     HasTerms = taxonomy != null && _taxonomyService.GetTermsCount(taxonomy.Id) > 0
                 };
@@ -117,13 +146,10 @@ namespace Orchard.Taxonomies.Drivers {
         }
 
         protected override void Exporting(ContentPart part, TaxonomyField field, ExportContentContext context) {
-            var appliedTerms = _taxonomyService.GetTermsForContentItem(part.ContentItem.Id, field.Name);
-
+            var appliedTerms = _taxonomyService.GetTermsForContentItem(part.ContentItem.Id, field.Name);    
             // stores all content items associated to this field
             var termIdentities = appliedTerms.Select(x => Services.ContentManager.GetItemMetadata(x).Identity.ToString()).ToArray();
-
-            if (termIdentities.Any())
-                context.Element(XmlConvert.EncodeLocalName(field.FieldDefinition.Name + "." + field.Name)).SetAttributeValue("Terms", String.Join(",", termIdentities));
+            context.Element(XmlConvert.EncodeLocalName(field.FieldDefinition.Name + "." + field.Name)).SetAttributeValue("Terms", String.Join(",", termIdentities));
         }
 
         protected override void Importing(ContentPart part, TaxonomyField field, ImportContentContext context) {
@@ -174,7 +200,6 @@ namespace Orchard.Taxonomies.Drivers {
 
             return term;
         }
-
 
         private IEnumerable<TermPart> GetAppliedTerms(ContentPart part, TaxonomyField field = null, VersionOptions versionOptions = null) {
             string fieldName = field != null ? field.Name : string.Empty;

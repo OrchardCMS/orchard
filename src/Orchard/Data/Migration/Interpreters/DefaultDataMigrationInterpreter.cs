@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using NHibernate;
 using NHibernate.Dialect;
 using NHibernate.SqlTypes;
 using Orchard.Data.Migration.Schema;
@@ -376,8 +377,11 @@ namespace Orchard.Data.Migration.Interpreters {
 
                     using (var command = session.Connection.CreateCommand()) {
                         command.CommandText = sqlStatement;
-                        session.Transaction.Enlist(command);
-                        command.ExecuteNonQuery();
+                        var transaction = session.GetCurrentTransaction();
+                        if (transaction != null) {
+                            transaction.Enlist(command);
+                            command.ExecuteNonQuery();
+                        }
                     }
                 }
             }
@@ -405,7 +409,7 @@ namespace Orchard.Data.Migration.Interpreters {
             if ( value == null ) {
                 return "null";
             }
-            
+
             TypeCode typeCode = Type.GetTypeCode(value.GetType());
             switch (typeCode) {
                 case TypeCode.Empty:
@@ -428,7 +432,7 @@ namespace Orchard.Data.Migration.Interpreters {
                 case TypeCode.Decimal:
                     return Convert.ToString(value, CultureInfo.InvariantCulture);
                 case TypeCode.DateTime:
-                    return String.Concat("'", Convert.ToString(value, CultureInfo.InvariantCulture), "'");
+                    return String.Concat("'", ((DateTime)value).ToString("yyyy-MM-dd hh:mm:ss", CultureInfo.InvariantCulture), "'");
             }
 
             return "null";

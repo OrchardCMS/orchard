@@ -131,12 +131,11 @@ namespace Orchard.MediaProcessing.Services {
                 // to handle cross machines concurrency
                 lock (String.Intern(path)) {
                     using (var image = GetImage(path)) {
+                        if (image == null) {
+                            return null;
+                        }
 
                         var filterContext = new FilterContext { Media = image, FilePath = _storageProvider.Combine("_Profiles", FormatProfilePath(profileName, System.Web.HttpUtility.UrlDecode(path))) };
-
-                        if (image == null) {
-                            return filterContext.FilePath;
-                        }
 
                         var tokens = new Dictionary<string, object>();
                         // if a content item is provided, use it while tokenizing
@@ -172,6 +171,8 @@ namespace Orchard.MediaProcessing.Services {
                                             }
                                         }
                                     }
+                                    // the storage provider may have altered the filepath
+                                    filterContext.FilePath = newFile.GetPath();
                                 }
                             }
                             catch(Exception e) {

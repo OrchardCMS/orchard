@@ -67,6 +67,8 @@ namespace Orchard.Users.Activities {
                 yield break;
             }
 
+            userName = userName.Trim();
+
             var user = _membershipService.CreateUser(
                 new CreateUserParams(
                     userName,
@@ -74,7 +76,8 @@ namespace Orchard.Users.Activities {
                     email,
                     isApproved: approved,
                     passwordQuestion: null,
-                    passwordAnswer: null));
+                    passwordAnswer: null,
+                    forcePasswordChange: false));
 
             workflowContext.Content = user;
 

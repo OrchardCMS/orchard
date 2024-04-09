@@ -1,6 +1,8 @@
 ﻿using Orchard.Commands;
+using Orchard.Localization;
 using Orchard.Security;
 using Orchard.Users.Services;
+using System.Collections.Generic;
 
 namespace Orchard.Users.Commands {
     public class UserCommands : DefaultOrchardCommandHandler {
@@ -40,24 +42,21 @@ namespace Orchard.Users.Commands {
                 return;
             }
 
-            if (Password == null || Password.Length < MinPasswordLength) {
-                Context.Output.WriteLine(T("You must specify a password of {0} or more characters.", MinPasswordLength));
+            IDictionary<string, LocalizedString> validationErrors;
+            if (!_userService.PasswordMeetsPolicies(Password, null, out validationErrors)) {
+                foreach (var error in validationErrors) {
+                    Context.Output.WriteLine(error.Value);
+                }
                 return;
             }
 
-            var user = _membershipService.CreateUser(new CreateUserParams(UserName, Password, Email, null, null, true));
+            var user = _membershipService.CreateUser(new CreateUserParams(UserName, Password, Email, null, null, true, false));
             if (user == null) {
                 Context.Output.WriteLine(T("Could not create user {0}. The authentication provider returned an error", UserName));
                 return;
             }
 
             Context.Output.WriteLine(T("User created successfully"));
-        }
-
-        int MinPasswordLength {
-            get {
-                return _membershipService.GetSettings().MinRequiredPasswordLength;
-            }
         }
     }
 }

@@ -128,7 +128,7 @@ namespace Orchard.Setup.Services {
 
                 using (var environment = bootstrapLifetimeScope.CreateWorkContextScope()) {
 
-                    // Check if the database is already created (in case an exception occured in the second phase).
+                    // Check if the database is already created (in case an exception occurred in the second phase).
                     var schemaBuilder = new SchemaBuilder(environment.Resolve<IDataMigrationInterpreter>());
                     var installationPresent = true;
                     try {
@@ -194,7 +194,7 @@ namespace Orchard.Setup.Services {
             var membershipService = environment.Resolve<IMembershipService>();
             var user = membershipService.CreateUser(
                 new CreateUserParams(context.AdminUsername, context.AdminPassword, 
-                String.Empty, String.Empty, String.Empty, true));
+                String.Empty, String.Empty, String.Empty, true, false));
 
             // Set site owner as current user for request (it will be set as the owner of all content items).
             var authenticationService = environment.Resolve<IAuthenticationService>();

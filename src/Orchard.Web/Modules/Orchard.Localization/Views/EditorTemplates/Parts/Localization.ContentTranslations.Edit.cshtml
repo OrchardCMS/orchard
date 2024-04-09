@@ -2,82 +2,117 @@
 @using System.Globalization
 @{
     Style.Require("LocalizationAdmin");
+    string returnUrl = Request.QueryString["ReturnUrl"] ?? "";
 }
 <fieldset class="localization culture-selection">
     <label for="@Html.FieldIdFor(m => m.SelectedCulture)">@T("Content Localization")</label>
     <div>
-        @if (!string.IsNullOrEmpty(Model.SelectedCulture))
-        {
+        @if ((!string.IsNullOrEmpty(Model.SelectedCulture) && ViewData.ModelState.IsValid) || !Model.DisplayLanguageSelection) {
             @T("This is the <em>{0}</em> variation of the content",
                 Html.Encode(Model.SelectedCulture))
 
-            if (Model.ContentLocalizations.Localizations.Any())
-            {
+            if (Model.ContentLocalizations.Localizations.Any()) {
                 <dl class="content-localization">
                     <dt>@T("Other translations:")</dt>
                     <dd class="content-localizations">
-                        @Html.UnorderedList(Model.ContentLocalizations.Localizations, (c, i) =>
-                            Html.ItemEditLink(c.Culture.Culture, c), "localizations")
+                        @if (returnUrl != "") {
+                            @Html.UnorderedList(Model.ContentLocalizations.Localizations, (c, i) =>
+             Html.ItemEditLink(c.Culture.Culture, c, new { ReturnUrl = returnUrl }), "localizations")
+                        }
+                        else {
+                            @Html.UnorderedList(Model.ContentLocalizations.Localizations, (c, i) =>
+             Html.ItemEditLink(c.Culture.Culture, c), "localizations")
+                        }
                     </dd>
                 </dl>
             }
 
-            if (Model.MissingCultures.Any())
-            {
-                var contentItemId = Model.MasterContentItem != null ? Model.MasterContentItem.Id : Model.ContentItem.Id;
-
-                <div class="add-localization">@Html.ActionLink(T("+ New translation").Text, "Translate", "Admin", new { area = "Orchard.Localization", id = contentItemId }, new { itemprop = "UnsafeUrl" })</div>
+            if (Model.MissingCultures.Any()) {
+                var contentItemId = Model.ContentItem.Id;
+                if (returnUrl != "") {
+                    <div class="add-localization">@Html.ActionLink(T("+ New translation").Text, "Translate", "Admin", new { area = "Orchard.Localization", id = contentItemId, ReturnUrl = returnUrl }, new { itemprop = "UnsafeUrl" })</div>
+                }
+                else {
+                    <div class="add-localization">@Html.ActionLink(T("+ New translation").Text, "Translate", "Admin", new { area = "Orchard.Localization", id = contentItemId }, new { itemprop = "UnsafeUrl" })</div>
+                }
             }
 
             @Html.Hidden(Html.FieldNameFor(m => m.SelectedCulture), Model.SelectedCulture)
         }
-        else if (Model.MasterContentItem != null)
-        {
-            @T("This is the <em>{0}</em> variation of {1}",
-                    BuildSelectedCultureList(
-                        Html.FieldIdFor(m => m.SelectedCulture),
-                        Html.FieldNameFor(m => m.SelectedCulture),
-                        Model.MissingCultures,
-                        Model.SelectedCulture),
-                    Html.ItemEditLink(Model.MasterContentItem))
+        else {
+            var masterContent = Model.MasterContentItem != null ? Model.MasterContentItem : Model.ContentLocalizations.Localizations.FirstOrDefault();
+            if (masterContent != null) {
+                @T("This is the <em>{0}</em> variation of {1}",
+                        BuildSelectedCultureList(
+                            Html.FieldIdFor(m => m.SelectedCulture),
+                            Html.FieldNameFor(m => m.SelectedCulture),
+                            Model.MissingCultures,
+                            Model.SelectedCulture,
+                            !ViewData.ModelState.IsValid),
+                        Html.ItemEditLink(masterContent));
+            }
+            else {
+                @T("This is the <em>{0}</em> variation of the content",
+                        BuildSelectedCultureList(
+                            Html.FieldIdFor(m => m.SelectedCulture),
+                            Html.FieldNameFor(m => m.SelectedCulture),
+                            Model.MissingCultures,
+                            Model.SelectedCulture,
+                            !ViewData.ModelState.IsValid));
+            }
 
-            if (Model.ContentLocalizations.Localizations.Any())
-            {
+            if (Model.ContentLocalizations.Localizations.Any()) {
                 <dl class="content-localization">
                     <dt>@T("Other translations:")</dt>
                     <dd class="content-localizations">
-                        @Html.UnorderedList(Model.ContentLocalizations.Localizations, (c, i) =>
-                            Html.ItemEditLink(c.Culture.Culture, c), "localizations")
+                        @if (returnUrl != "") {
+                            @Html.UnorderedList(Model.ContentLocalizations.Localizations, (c, i) =>
+                            Html.ItemEditLink(c.Culture.Culture, c, new { ReturnUrl = returnUrl }), "localizations");
+                        }
+                        else {
+                            @Html.UnorderedList(Model.ContentLocalizations.Localizations, (c, i) =>
+                                Html.ItemEditLink(c.Culture.Culture, c), "localizations");
+                        }
                     </dd>
                 </dl>
             }
         }
-        else
-        {
-            @T("This is the <em>{0}</em> variation of the content",
-                BuildSelectedCultureList(
-                    Html.FieldIdFor(m => m.SelectedCulture),
-                    Html.FieldNameFor(m => m.SelectedCulture),
-                    Model.MissingCultures,
-                    Model.SelectedCulture))
-        }
+
     </div>
 </fieldset>
 
 
 
 @functions{
-    private IHtmlString BuildSelectedCultureList(string id, string name, IEnumerable<string> siteCultures, string culture) {
+    private IHtmlString BuildSelectedCultureList(string id, string name, IEnumerable<string> siteCultures, string culture, bool addSelectedCulture) {
         TagBuilder selectTag = new TagBuilder("select");
         selectTag.Attributes["id"] = id;
         selectTag.Attributes["name"] = name;
+
+        if (addSelectedCulture) {
+            TagBuilder optionTagCulture = new TagBuilder("option");
+            optionTagCulture.Attributes["data-content-dir"] = CultureInfo.GetCultureInfo(culture).TextInfo.IsRightToLeft ? "rtl" : "ltr";
+            optionTagCulture.Attributes["selected"] = "selected";
+            optionTagCulture.SetInnerText(Html.Encode(culture));
+            selectTag.InnerHtml += optionTagCulture.ToString();
+        }
 
         foreach (var siteCulture in siteCultures) {
             TagBuilder optionTag = new TagBuilder("option");
             optionTag.Attributes["data-content-dir"] = CultureInfo.GetCultureInfo(siteCulture).TextInfo.IsRightToLeft ? "rtl" : "ltr";
 
-            if (siteCulture == culture) {
-                optionTag.Attributes["selected"] = "selected";
+            // If the form is in error, the culture remains the one previously selected.
+            if (!addSelectedCulture) {
+                if (string.IsNullOrEmpty(culture)) {
+                    if (siteCulture == WorkContext.CurrentSite.SiteCulture) {
+                        optionTag.Attributes["selected"] = "selected";
+                    }
+                }
+                else {
+                    if (siteCulture == culture) {
+                        optionTag.Attributes["selected"] = "selected";
+                    }
+                }
             }
             optionTag.SetInnerText(Html.Encode(siteCulture));
             selectTag.InnerHtml += optionTag.ToString();
@@ -88,32 +123,32 @@
 }
 @using (Script.Foot()) {
     <script type="text/javascript">
-//<![CDATA[
-    (function($) {
-        "use strict";
+        //<![CDATA[
+        (function ($) {
+            "use strict";
 
-        var culture = $("#@Html.FieldIdFor(m => m.SelectedCulture)");
+            var culture = $("#@Html.FieldIdFor(m => m.SelectedCulture)");
 
-        function flipCulture() {
-            var optionDirectionality = $("option:selected", culture).attr("data-content-dir");
-            var contentZone = $(".zone-content");
-            if (contentZone.hasClass(optionDirectionality))
-                return;
+            function flipCulture() {
+                var optionDirectionality = $("option:selected", culture).attr("data-content-dir");
+                var contentZone = $(".zone-content");
+                if (contentZone.hasClass(optionDirectionality))
+                    return;
 
-            var oldClass = optionDirectionality === "ltr" ? "rtl" : "";
+                var oldClass = optionDirectionality === "ltr" ? "rtl" : "";
 
-            contentZone.removeClass("content-" + oldClass);
-            contentZone.addClass("content-" + optionDirectionality);
+                contentZone.removeClass("content-" + oldClass);
+                contentZone.addClass("content-" + optionDirectionality);
 
-            $(document).trigger("localization.ui.directionalitychanged", optionDirectionality);
-        }
+                $(document).trigger("localization.ui.directionalitychanged", optionDirectionality);
+            }
 
-        culture.change(function () {
+            culture.change(function () {
+                flipCulture();
+            });
+
             flipCulture();
-        });
-
-        flipCulture();
-    })(jQuery);
-//]]>
+        })(jQuery);
+        //]]>
     </script>
 }

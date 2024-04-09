@@ -12,9 +12,7 @@ namespace Markdown.Services
             if (String.IsNullOrEmpty(text))
                 return String.Empty;
 
-            var markdown = new MarkdownSharp.Markdown();
-
-            return markdown.Transform(text);
+            return Markdig.Markdown.ToHtml(text);
         }
     }
 }
