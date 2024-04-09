@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
+using Orchard.Caching;
 using Orchard.ContentManagement;
 using Orchard.Environment.Configuration;
 using Orchard.FileSystems.Media;
@@ -25,6 +26,7 @@ namespace Orchard.MediaProcessing.Services {
         private readonly IOrchardServices _services;
         private readonly ITokenizer _tokenizer;
         private readonly IAppConfigurationAccessor _appConfigurationAccessor;
+        private readonly ICacheManager _cacheManager;
 
         public ImageProfileManager(
             IStorageProvider storageProvider,
@@ -33,7 +35,8 @@ namespace Orchard.MediaProcessing.Services {
             IImageProcessingManager processingManager,
             IOrchardServices services,
             ITokenizer tokenizer,
-            IAppConfigurationAccessor appConfigurationAccessor) {
+            IAppConfigurationAccessor appConfigurationAccessor,
+            ICacheManager cacheManager) {
             _storageProvider = storageProvider;
             _fileNameProvider = fileNameProvider;
             _profileService = profileService;
@@ -41,6 +44,7 @@ namespace Orchard.MediaProcessing.Services {
             _services = services;
             _tokenizer = tokenizer;
             _appConfigurationAccessor = appConfigurationAccessor;
+            _cacheManager = cacheManager;
 
             Logger = NullLogger.Instance;
         }
@@ -259,9 +263,10 @@ namespace Orchard.MediaProcessing.Services {
             return path.Substring(index < 1 ? 0 : index).Replace("media", "Media");
         }
 
-        private bool ShouldNormalizePath() {
-            var normalizePath = _appConfigurationAccessor.GetConfiguration("Orchard.MediaProcessing.NormalizePath");
-            return string.IsNullOrEmpty(normalizePath) || normalizePath.Equals("true", StringComparison.OrdinalIgnoreCase);
-        }
+        private bool ShouldNormalizePath() =>
+            _cacheManager.Get("MediaProcessing.NormalizePath", true, ctx => {
+                var normalizePath = _appConfigurationAccessor.GetConfiguration("Orchard.MediaProcessing.NormalizePath");
+                return string.IsNullOrEmpty(normalizePath) || normalizePath.Equals("true", StringComparison.OrdinalIgnoreCase);
+            });
     }
 }
