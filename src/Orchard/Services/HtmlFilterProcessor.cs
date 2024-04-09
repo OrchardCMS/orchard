@@ -4,6 +4,7 @@ using System.Linq;
 namespace Orchard.Services {
     public class HtmlFilterProcessor : IHtmlFilterProcessor {
         private readonly IEnumerable<IHtmlFilter> _filters;
+
         public HtmlFilterProcessor(IEnumerable<IHtmlFilter> filters) {
             _filters = filters;
         }
