@@ -250,11 +250,12 @@ namespace Orchard.MediaProcessing.Services {
         }
 
         private string NormalizePath(string path) {
-            //Slice at the protocol, if any. E.g. http:// or https://.
+            // Slice at the protocol, if any, e.g. "http://" or "https://".
             var index = path.IndexOf("//", StringComparison.OrdinalIgnoreCase);
-            //Slice at the first directory after the protocol or at 0 if no protocol specified.
+            // Slice at the first directory after the protocol or at 0 if no protocol specified.
             index = path.IndexOf("/", index < 0 ? 0 : index + 2, StringComparison.OrdinalIgnoreCase);
-            //Return path from the first directory, replacing lcase 'media' (Azure container) with ucase 'Media' (filestorage).
+            // Return path from the first directory, replacing lowercase 'media' (Azure container) with uppercase
+            // 'Media' (filestorage).
             return path.Substring(index < 1 ? 0 : index).Replace("media", "Media");
         }
 
