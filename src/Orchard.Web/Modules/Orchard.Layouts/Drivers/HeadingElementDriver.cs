@@ -7,10 +7,10 @@ using Orchard.Services;
 
 namespace Orchard.Layouts.Drivers {
     public class HeadingElementDriver : ElementDriver<Heading> {
-        private readonly IHtmlFilterRunner _runner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
 
-        public HeadingElementDriver(IHtmlFilterRunner runner) {
-            _runner = runner;
+        public HeadingElementDriver(IHtmlFilterProcessor htmlFilterProcessor) {
+            _htmlFilterProcessor = htmlFilterProcessor;
         }
 
         protected override EditorResult OnBuildEditor(Heading element, ElementEditorContext context) {
@@ -30,7 +30,7 @@ namespace Orchard.Layouts.Drivers {
         }
 
         protected override void OnDisplaying(Heading element, ElementDisplayingContext context) {
-            context.ElementShape.ProcessedContent = _runner.RunFilters(element.Content, new HtmlFilterContext { Flavor = "html", Data = context.GetTokenData() });
+            context.ElementShape.ProcessedContent = _htmlFilterProcessor.ProcessFilters(element.Content, new HtmlFilterContext { Flavor = "html", Data = context.GetTokenData() });
             context.ElementShape.Level = element.Level;
         }
     }

@@ -16,16 +16,16 @@ namespace Orchard.Projections.StandardQueries
     public class QueryFeedQuery : IFeedQueryProvider, IFeedQuery {
         private readonly IContentManager _contentManager;
         private readonly IProjectionManager _projectionManager;
-        private readonly IHtmlFilterRunner _htmlFilterRunner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
 
         public QueryFeedQuery(
             IContentManager contentManager,
             IProjectionManager projectionManager,
-            IHtmlFilterRunner htmlFilterRunner)
+            IHtmlFilterProcessor htmlFilterProcessor)
         {
             _contentManager = contentManager;
             _projectionManager = projectionManager;
-            _htmlFilterRunner = htmlFilterRunner;
+            _htmlFilterProcessor = htmlFilterProcessor;
         }
 
         public FeedQueryMatch Match(FeedContext context) {
@@ -54,7 +54,7 @@ namespace Orchard.Projections.StandardQueries
                 return;
             }
 
-            var inspector = new ItemInspector(container, _contentManager.GetItemMetadata(container), _htmlFilterRunner);
+            var inspector = new ItemInspector(container, _contentManager.GetItemMetadata(container), _htmlFilterProcessor);
             if (context.Format == "rss") {
                 var link = new XElement("link");
                 context.Response.Element.SetElementValue("title", inspector.Title);

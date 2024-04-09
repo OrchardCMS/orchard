@@ -8,10 +8,10 @@ using Orchard.Services;
 namespace Orchard.Layouts.Drivers
 {
     public class TextElementDriver : ElementDriver<Text> {
-        private readonly IHtmlFilterRunner _runner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
 
-        public TextElementDriver(IHtmlFilterRunner runner) {
-            _runner = runner;
+        public TextElementDriver(IHtmlFilterProcessor htmlFilterProcessor) {
+            _htmlFilterProcessor = htmlFilterProcessor;
         }
 
         protected override EditorResult OnBuildEditor(Text element, ElementEditorContext context) {
@@ -29,7 +29,7 @@ namespace Orchard.Layouts.Drivers
         }
 
         protected override void OnDisplaying(Text element, ElementDisplayingContext context) {
-            context.ElementShape.ProcessedContent = _runner.RunFilters(element.Content, new HtmlFilterContext { Flavor = "textarea", Data = context.GetTokenData() });
+            context.ElementShape.ProcessedContent = _htmlFilterProcessor.ProcessFilters(element.Content, new HtmlFilterContext { Flavor = "textarea", Data = context.GetTokenData() });
         }
     }
 }

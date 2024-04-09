@@ -12,11 +12,11 @@ namespace Orchard.Core.Feeds.StandardQueries
 {
     public class ContainerFeedQuery : IFeedQueryProvider, IFeedQuery {
         private readonly IContentManager _contentManager;
-        private readonly IHtmlFilterRunner _htmlFilterRunner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
 
-        public ContainerFeedQuery(IContentManager contentManager, IHtmlFilterRunner htmlFilterRunner) {
+        public ContainerFeedQuery(IContentManager contentManager, IHtmlFilterProcessor htmlFilterProcessor) {
             _contentManager = contentManager;
-            _htmlFilterRunner = htmlFilterRunner;
+            _htmlFilterProcessor = htmlFilterProcessor;
         }
 
         public FeedQueryMatch Match(FeedContext context) {
@@ -54,7 +54,7 @@ namespace Orchard.Core.Feeds.StandardQueries
                 return;
             }
             
-            var inspector = new ItemInspector(container, _contentManager.GetItemMetadata(container), _htmlFilterRunner);
+            var inspector = new ItemInspector(container, _contentManager.GetItemMetadata(container), _htmlFilterProcessor);
             if (context.Format == "rss") {
                 var link = new XElement("link");
                 context.Response.Element.SetElementValue("title", inspector.Title);

@@ -13,10 +13,10 @@ using Orchard.Services;
 
 namespace Orchard.Core.Common.Drivers {
     public class TextFieldDriver : ContentFieldDriver<TextField> {
-        private readonly IHtmlFilterRunner _htmlFilterRunner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
 
-        public TextFieldDriver(IOrchardServices services, IHtmlFilterRunner htmlFilterRunner) {
-            _htmlFilterRunner = htmlFilterRunner;
+        public TextFieldDriver(IOrchardServices services, IHtmlFilterProcessor htmlFilterProcessor) {
+            _htmlFilterProcessor = htmlFilterProcessor;
             Services = services;
             T = NullLocalizer.Instance;
         }
@@ -36,7 +36,7 @@ namespace Orchard.Core.Common.Drivers {
             return ContentShape("Fields_Common_Text", GetDifferentiator(field, part),
                 () => {
                     var settings = field.PartFieldDefinition.Settings.GetModel<TextFieldSettings>();
-                    var fieldValue = new HtmlString(_htmlFilterRunner.RunFilters(field.Value, settings.Flavor, part));
+                    var fieldValue = new HtmlString(_htmlFilterProcessor.ProcessFilters(field.Value, settings.Flavor, part));
                     return shapeHelper.Fields_Common_Text(Name: field.Name, Value: fieldValue);
                 });
         }

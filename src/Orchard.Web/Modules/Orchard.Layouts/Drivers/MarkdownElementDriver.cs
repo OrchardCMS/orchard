@@ -10,9 +10,9 @@ namespace Orchard.Layouts.Drivers
 {
     [OrchardFeature("Orchard.Layouts.Markdown")]
     public class MarkdownElementDriver : ElementDriver<MarkdownElement> {
-        private readonly IHtmlFilterRunner _runner;
-        public MarkdownElementDriver(IHtmlFilterRunner runner) {
-            _runner = runner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
+        public MarkdownElementDriver(IHtmlFilterProcessor htmlFilterProcessor) {
+            _htmlFilterProcessor = htmlFilterProcessor;
         }
 
         protected override EditorResult OnBuildEditor(MarkdownElement element, ElementEditorContext context) {
@@ -30,7 +30,7 @@ namespace Orchard.Layouts.Drivers
         }
 
         protected override void OnDisplaying(MarkdownElement element, ElementDisplayingContext context) {
-            context.ElementShape.ProcessedContent = _runner.RunFilters(element.Content, new HtmlFilterContext { Flavor = "markdown", Data = context.GetTokenData() });
+            context.ElementShape.ProcessedContent = _htmlFilterProcessor.ProcessFilters(element.Content, new HtmlFilterContext { Flavor = "markdown", Data = context.GetTokenData() });
         }
     }
 }

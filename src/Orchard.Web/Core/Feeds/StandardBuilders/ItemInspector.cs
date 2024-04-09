@@ -12,17 +12,17 @@ namespace Orchard.Core.Feeds.StandardBuilders {
     public class ItemInspector {
         private readonly IContent _item;
         private readonly ContentItemMetadata _metadata;
-        private readonly IHtmlFilterRunner _htmlFilterRunner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
         private readonly ICommonPart _common;
         private readonly ITitleAspect _titleAspect;
         private readonly BodyPart _body;
 
         public ItemInspector(IContent item, ContentItemMetadata metadata) : this(item, metadata, null) {}
 
-        public ItemInspector(IContent item, ContentItemMetadata metadata, IHtmlFilterRunner htmlFilterRunner) {
+        public ItemInspector(IContent item, ContentItemMetadata metadata, IHtmlFilterProcessor htmlFilterProcessor) {
             _item = item;
             _metadata = metadata;
-            _htmlFilterRunner = htmlFilterRunner;
+            _htmlFilterProcessor = htmlFilterProcessor;
             _common = item.Get<ICommonPart>();
             _titleAspect = item.Get<ITitleAspect>();
             _body = item.Get<BodyPart>();
@@ -49,8 +49,8 @@ namespace Orchard.Core.Feeds.StandardBuilders {
 
         public string Description {
             get {
-                if (_htmlFilterRunner != null && _body != null && !string.IsNullOrEmpty(_body.Text)) {
-                    return _htmlFilterRunner.RunFilters(_body.Text, GetFlavor(_body), _body);
+                if (_htmlFilterProcessor != null && _body != null && !string.IsNullOrEmpty(_body.Text)) {
+                    return _htmlFilterProcessor.ProcessFilters(_body.Text, GetFlavor(_body), _body);
                 }
                 return Title;
             }

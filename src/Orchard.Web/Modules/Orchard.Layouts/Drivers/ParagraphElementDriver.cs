@@ -7,10 +7,10 @@ using Orchard.Services;
 
 namespace Orchard.Layouts.Drivers {
     public class ParagraphElementDriver : ElementDriver<Paragraph> {
-        private readonly IHtmlFilterRunner _runner;
+        private readonly IHtmlFilterProcessor _htmlFilterProcessor;
 
-        public ParagraphElementDriver(IHtmlFilterRunner runner) {
-            _runner = runner;
+        public ParagraphElementDriver(IHtmlFilterProcessor htmlFilterProcessor) {
+            _htmlFilterProcessor = htmlFilterProcessor;
         }
 
         protected override EditorResult OnBuildEditor(Paragraph element, ElementEditorContext context) {
@@ -28,7 +28,7 @@ namespace Orchard.Layouts.Drivers {
         }
 
         protected override void OnDisplaying(Paragraph element, ElementDisplayingContext context) {
-            context.ElementShape.ProcessedContent = _runner.RunFilters(element.Content, new HtmlFilterContext { Flavor = "html", Data = context.GetTokenData() });
+            context.ElementShape.ProcessedContent = _htmlFilterProcessor.ProcessFilters(element.Content, new HtmlFilterContext { Flavor = "html", Data = context.GetTokenData() });
         }
     }
 }
