@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Orchard.ContentManagement.Handlers;
 using Orchard.DisplayManagement.Shapes;
 using Orchard.DisplayManagement.Descriptors;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.ContentManagement.Drivers {
     public class ContentShapeResult : DriverResult {
@@ -66,6 +67,7 @@ namespace Orchard.ContentManagement.Drivers {
             newShapeMetadata.DisplayType = displayType;
             newShapeMetadata.PlacementSource = placement.Source;
             newShapeMetadata.Tab = placement.GetTab();
+            newShapeMetadata.Card = placement.GetCard();
             
             // If a specific shape is provided, remove all previous alternates and wrappers.
             if (!String.IsNullOrEmpty(placement.ShapeType)) {
@@ -109,7 +111,7 @@ namespace Orchard.ContentManagement.Drivers {
         }
 
         public ContentShapeResult OnGroup(string groupId) {
-            _groupId = groupId;
+            _groupId = groupId.ToSafeName();
             return this;
         }
 

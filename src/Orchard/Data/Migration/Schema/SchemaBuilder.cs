@@ -33,8 +33,8 @@ namespace Orchard.Data.Migration.Schema {
         /// <summary>
         /// Translate Table name into database table name - including prefixes.
         /// </summary>
-        public virtual string TableDbName(string srcTable) {
-            return _interpreter.PrefixTableName(String.Concat(FormatPrefix(FeaturePrefix), srcTable));
+        public virtual string TableDbName(string srcTable, string featurePrefixOverride = null) {
+            return _interpreter.PrefixTableName(FormatPrefix(featurePrefixOverride ?? FeaturePrefix) + srcTable);
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Orchard.Data.Migration.Schema {
                 if (ex.IsFatal()) {  
                     throw;
                 } 
-                throw new OrchardException(T("An unexpected error occured while executing the SQL statement: {0}", sql), ex); // Add the sql to the nested exception information
+                throw new OrchardException(T("An unexpected error occurred while executing the SQL statement: {0}", sql), ex); // Add the sql to the nested exception information
             }
         }
 
