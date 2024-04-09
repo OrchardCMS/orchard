@@ -4,9 +4,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
 using System.Web;
 using Orchard.ContentManagement;
+using Orchard.Environment.Configuration;
 using Orchard.FileSystems.Media;
 using Orchard.Forms.Services;
 using Orchard.Logging;
@@ -15,8 +15,6 @@ using Orchard.MediaProcessing.Media;
 using Orchard.MediaProcessing.Models;
 using Orchard.Tokens;
 using Orchard.Utility.Extensions;
-using Orchard.Environment.Configuration;
-using Orchard.Caching;
 
 namespace Orchard.MediaProcessing.Services {
     public class ImageProfileManager : IImageProfileManager {
@@ -26,7 +24,6 @@ namespace Orchard.MediaProcessing.Services {
         private readonly IImageProcessingManager _processingManager;
         private readonly IOrchardServices _services;
         private readonly ITokenizer _tokenizer;
-        private readonly ISignals _signals;
         private readonly IAppConfigurationAccessor _appConfigurationAccessor;
 
         public ImageProfileManager(
@@ -36,7 +33,6 @@ namespace Orchard.MediaProcessing.Services {
             IImageProcessingManager processingManager,
             IOrchardServices services,
             ITokenizer tokenizer,
-            ISignals signals,
             IAppConfigurationAccessor appConfigurationAccessor) {
             _storageProvider = storageProvider;
             _fileNameProvider = fileNameProvider;
@@ -44,7 +40,6 @@ namespace Orchard.MediaProcessing.Services {
             _processingManager = processingManager;
             _services = services;
             _tokenizer = tokenizer;
-            _signals = signals;
             _appConfigurationAccessor = appConfigurationAccessor;
 
             Logger = NullLogger.Instance;
@@ -52,7 +47,7 @@ namespace Orchard.MediaProcessing.Services {
 
         public ILogger Logger { get; set; }
 
-          public string GetImageProfileUrl(string path, string profileName) {
+        public string GetImageProfileUrl(string path, string profileName) {
             return GetImageProfileUrl(path, profileName, null, new FilterRecord[] { });
         }
 
@@ -74,19 +69,19 @@ namespace Orchard.MediaProcessing.Services {
             // path is the publicUrl of the media, so it might contain url-encoded chars
 
             // try to load the processed filename from cache
-            var filePath = _fileNameProvider.GetFileName(profileName, System.Web.HttpUtility.UrlDecode(path));
+            var filePath = _fileNameProvider.GetFileName(profileName, HttpUtility.UrlDecode(path));
             bool process = false;
 
             //after reboot the app cache is empty so we reload the image in the cache if it exists in the _Profiles folder
             if (string.IsNullOrEmpty(filePath)) {
-                var profileFilePath = _storageProvider.Combine("_Profiles", FormatProfilePath(profileName, System.Web.HttpUtility.UrlDecode(path)));
+                var profileFilePath = _storageProvider.Combine("_Profiles", FormatProfilePath(profileName, HttpUtility.UrlDecode(path)));
 
                 if (_storageProvider.FileExists(profileFilePath)) {
-                    _fileNameProvider.UpdateFileName(profileName, System.Web.HttpUtility.UrlDecode(path), profileFilePath);
+                    _fileNameProvider.UpdateFileName(profileName, HttpUtility.UrlDecode(path), profileFilePath);
                     filePath = profileFilePath;
                 }
             }
-            
+
             // if the filename is not cached, process it
             if (string.IsNullOrEmpty(filePath)) {
                 Logger.Debug("FilePath is null, processing required, profile {0} for image {1}", profileName, path);
@@ -94,7 +89,7 @@ namespace Orchard.MediaProcessing.Services {
                 process = true;
             }
 
-                // the processd file doesn't exist anymore, process it
+            // the processd file doesn't exist anymore, process it
             else if (!_storageProvider.FileExists(filePath)) {
                 Logger.Debug("Processed file no longer exists, processing required, profile {0} for image {1}", profileName, path);
 
@@ -129,7 +124,7 @@ namespace Orchard.MediaProcessing.Services {
                 else {
                     profilePart = _services.ContentManager.New<ImageProfilePart>("ImageProfile");
                     profilePart.Name = profileName;
-                    foreach (var customFilter in customFilters) { 
+                    foreach (var customFilter in customFilters) {
                         profilePart.Filters.Add(customFilter);
                     }
                 }
@@ -143,7 +138,7 @@ namespace Orchard.MediaProcessing.Services {
                             return null;
                         }
 
-                        var filterContext = new FilterContext { Media = image, FilePath = _storageProvider.Combine("_Profiles", FormatProfilePath(profileName, System.Web.HttpUtility.UrlDecode(path))) };
+                        var filterContext = new FilterContext { Media = image, FilePath = _storageProvider.Combine("_Profiles", FormatProfilePath(profileName, HttpUtility.UrlDecode(path))) };
 
                         var tokens = new Dictionary<string, object>();
                         // if a content item is provided, use it while tokenizing
@@ -161,7 +156,7 @@ namespace Orchard.MediaProcessing.Services {
                             descriptor.Filter(filterContext);
                         }
 
-                        _fileNameProvider.UpdateFileName(profileName, System.Web.HttpUtility.UrlDecode(path), filterContext.FilePath);
+                        _fileNameProvider.UpdateFileName(profileName, HttpUtility.UrlDecode(path), filterContext.FilePath);
 
                         if (!filterContext.Saved) {
                             try {
@@ -183,7 +178,7 @@ namespace Orchard.MediaProcessing.Services {
                                     filterContext.FilePath = newFile.GetPath();
                                 }
                             }
-                            catch(Exception e) {
+                            catch (Exception e) {
                                 Logger.Error(e, "A profile could not be processed: " + path);
                             }
                         }
@@ -212,7 +207,7 @@ namespace Orchard.MediaProcessing.Services {
                     var file = _storageProvider.GetFile(storagePath);
                     return file.OpenRead();
                 }
-                catch(Exception e) {
+                catch (Exception e) {
                     Logger.Error(e, "path:" + path + " storagePath:" + storagePath);
                 }
             }
@@ -244,52 +239,14 @@ namespace Orchard.MediaProcessing.Services {
             return false;
         }
 
-        public bool PurgeImageProfile(int id) {
-            var profile = _profileService.GetImageProfile(id);
-            try {
-                var folder = _storageProvider.Combine("_Profiles", GetHexHashCode(profile.Name));
-                _storageProvider.DeleteFolder(folder);
-                profile.FileNames.Clear();
-                _signals.Trigger("MediaProcessing_Saved_" + profile.Name);
-                return true;
-            }
-            catch (Exception ex) {
-                Logger.Warning(ex, "Unable to purge image profile '{0}'", profile.Name);
-                return false;
-            }
-        }
-
-        public bool PurgeObsoleteImageProfiles() {
-            var profiles = _profileService.GetAllImageProfiles();
-            try {
-                if (profiles != null) {
-                    var validPaths = profiles.Select(profile => _storageProvider.Combine("_Profiles", GetHexHashCode(profile.Name)));
-                    foreach (var folder in _storageProvider.ListFolders("_Profiles").Select(f => f.GetPath())) {
-                        if (!validPaths.Any(v => folder.StartsWith(v))) {
-                            _storageProvider.DeleteFolder(folder);
-                        }
-                    }
-                }
-                return true;
-            }
-            catch (Exception ex) {
-                Logger.Warning(ex, "Unable to purge obsolete image profiles");
-                return false;
-            }
-        }
-
         private string FormatProfilePath(string profileName, string path) {
             var normalizedPath = ShouldNormalizePath() ? NormalizePath(path) : path;
             var filenameWithExtension = Path.GetFileName(normalizedPath) ?? "";
             var fileLocation = normalizedPath.Substring(0, normalizedPath.Length - filenameWithExtension.Length);
 
             return _storageProvider.Combine(
-                _storageProvider.Combine(GetHexHashCode(profileName), GetHexHashCode(fileLocation)),
+                _storageProvider.Combine(_profileService.GetNameHashCode(profileName), _profileService.GetNameHashCode(fileLocation)),
                     filenameWithExtension);
-        }
-
-        private string GetHexHashCode(string value) {
-            return value.GetHashCode().ToString("x").ToLowerInvariant();
         }
 
         private string NormalizePath(string path) {

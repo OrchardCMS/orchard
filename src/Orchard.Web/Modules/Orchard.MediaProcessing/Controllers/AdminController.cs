@@ -22,7 +22,6 @@ namespace Orchard.MediaProcessing.Controllers {
     public class AdminController : Controller, IUpdateModel {
         private readonly ISiteService _siteService;
         private readonly IImageProfileService _profileService;
-        private readonly IImageProfileManager _imageProfileManager;
         private readonly IImageProcessingManager _imageProcessingManager;
 
         public AdminController(
@@ -30,11 +29,9 @@ namespace Orchard.MediaProcessing.Controllers {
             IShapeFactory shapeFactory,
             ISiteService siteService,
             IImageProfileService profileService,
-            IImageProfileManager imageProfileManager,
             IImageProcessingManager imageProcessingManager) {
             _siteService = siteService;
             _profileService = profileService;
-            _imageProfileManager = imageProfileManager;
             _imageProcessingManager = imageProcessingManager;
             Services = services;
 
@@ -91,7 +88,7 @@ namespace Orchard.MediaProcessing.Controllers {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage media profiles")))
                 return new HttpUnauthorizedResult();
 
-            var viewModel = new AdminIndexViewModel {ImageProfiles = new List<ImageProfileEntry>(), Options = new AdminIndexOptions()};
+            var viewModel = new AdminIndexViewModel { ImageProfiles = new List<ImageProfileEntry>(), Options = new AdminIndexOptions() };
             UpdateModel(viewModel);
 
             var checkedItems = viewModel.ImageProfiles.Where(c => c.IsChecked);
@@ -136,7 +133,7 @@ namespace Orchard.MediaProcessing.Controllers {
                             Category = f.Category,
                             Type = f.Type,
                             FilterRecordId = filter.Id,
-                            DisplayText = String.IsNullOrWhiteSpace(filter.Description) ? f.Display(new FilterContext {State = FormParametersHelper.ToDynamic(filter.State)}).Text : filter.Description
+                            DisplayText = String.IsNullOrWhiteSpace(filter.Description) ? f.Display(new FilterContext { State = FormParametersHelper.ToDynamic(filter.State) }).Text : filter.Description
                         });
                 }
             }
@@ -178,7 +175,7 @@ namespace Orchard.MediaProcessing.Controllers {
                     throw new ArgumentException("direction");
             }
 
-            return RedirectToAction("Edit", new {id});
+            return RedirectToAction("Edit", new { id });
         }
 
         public ActionResult Preview(int id) {
@@ -193,7 +190,7 @@ namespace Orchard.MediaProcessing.Controllers {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage media profiles")))
                 return new HttpUnauthorizedResult();
 
-            if (_imageProfileManager.PurgeImageProfile(id)) {
+            if (_profileService.PurgeImageProfile(id)) {
                 Services.Notifier.Information(T("The Image Profile has been purged"));
             }
             else {
@@ -208,7 +205,7 @@ namespace Orchard.MediaProcessing.Controllers {
             if (!Services.Authorizer.Authorize(StandardPermissions.SiteOwner, T("Not authorized to manage media profiles")))
                 return new HttpUnauthorizedResult();
 
-            if (_imageProfileManager.PurgeObsoleteImageProfiles()) {
+            if (_profileService.PurgeObsoleteImageProfiles()) {
                 Services.Notifier.Information(T("The obsolete Image Profiles have been purged"));
             }
             else {
