@@ -73,6 +73,7 @@ namespace Orchard.MediaProcessing.Services {
             var profile = _contentManager.Get(id);
 
             if (profile != null) {
+                DeleteImageProfileFolder(profile.As<ImageProfilePart>().Name);
                 _contentManager.Remove(profile);
             }
         }
@@ -122,8 +123,7 @@ namespace Orchard.MediaProcessing.Services {
         public bool PurgeImageProfile(int id) {
             var profile = GetImageProfile(id);
             try {
-                var folder = _storageProvider.Combine("_Profiles", this.GetNameHashCode(profile.Name));
-                _storageProvider.DeleteFolder(folder);
+                DeleteImageProfileFolder(profile.Name);
                 profile.FileNames.Clear();
                 _signals.Trigger("MediaProcessing_Saved_" + profile.Name);
                 return true;
@@ -151,6 +151,11 @@ namespace Orchard.MediaProcessing.Services {
                 Logger.Warning(ex, "Unable to purge obsolete image profiles");
                 return false;
             }
+        }
+
+        private void DeleteImageProfileFolder(string profileName) {
+            var folder = _storageProvider.Combine("_Profiles", this.GetNameHashCode(profileName));
+            _storageProvider.DeleteFolder(folder);
         }
     }
 }

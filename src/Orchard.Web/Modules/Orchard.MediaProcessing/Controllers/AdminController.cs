@@ -154,7 +154,7 @@ namespace Orchard.MediaProcessing.Controllers {
                 return HttpNotFound();
             }
 
-            Services.ContentManager.Remove(profile.ContentItem);
+            _profileService.DeleteImageProfile(id);
             Services.Notifier.Success(T("Image Profile {0} deleted", profile.Name));
 
             return RedirectToAction("Index");
