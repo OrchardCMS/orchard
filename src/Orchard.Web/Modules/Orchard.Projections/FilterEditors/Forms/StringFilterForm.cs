@@ -36,8 +36,14 @@ namespace Orchard.Projections.FilterEditors.Forms {
                             Title: T("Value"),
                             Classes: new[] { "text medium", "tokenized" },
                             Description: T("Enter the value the string should be.")
-                            )
-                        );
+                        ),
+                        _IgnoreIfEmptyValue: Shape.Checkbox(
+                            Id: "IgnoreFilterIfValueIsEmpty",
+                            Name: "IgnoreFilterIfValueIsEmpty",
+                            Title: "Ignore filter if value is empty",
+                            Description: T("When enabled, the filter will not be applied if the provided value is or evaluates to empty."),
+                            Value: "true"
+                        ));
 
                     f._Operator.Add(new SelectListItem { Value = Convert.ToString(StringOperator.Equals), Text = T("Is equal to").Text });
                     f._Operator.Add(new SelectListItem { Value = Convert.ToString(StringOperator.NotEquals), Text = T("Is not equal to").Text });
@@ -64,6 +70,11 @@ namespace Orchard.Projections.FilterEditors.Forms {
         public static Action<IHqlExpressionFactory> GetFilterPredicate(dynamic formState, string property) {
             var op = (StringOperator)Enum.Parse(typeof(StringOperator), Convert.ToString(formState.Operator));
             object value = Convert.ToString(formState.Value);
+
+            if (bool.TryParse(formState.IgnoreFilterIfValueIsEmpty?.ToString() ?? "", out bool ignoreIfEmpty)
+                && ignoreIfEmpty
+                && string.IsNullOrWhiteSpace(value as string))
+                return (ex) => { };
 
             switch (op) {
                 case StringOperator.Equals:
