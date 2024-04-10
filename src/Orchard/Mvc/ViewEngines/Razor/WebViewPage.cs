@@ -190,11 +190,10 @@ namespace Orchard.Mvc.ViewEngines.Razor {
                 _tenantPrefix = WorkContext.Resolve<ShellSettings>().RequestUrlPrefix ?? "";
             }
 
-            if (!String.IsNullOrEmpty(_tenantPrefix)
-                && path.StartsWith("~/")  
-                && !CommonLocations.Any(gpp=>path.StartsWith(gpp, StringComparison.OrdinalIgnoreCase))
-            ) {
-                return base.Href("~/" + _tenantPrefix + path.Substring(String.IsNullOrWhiteSpace(_tenantPrefix) ? 2 : 1), pathParts);
+            if (!string.IsNullOrWhiteSpace(_tenantPrefix)
+                && path.StartsWith("~/")
+                && !CommonLocations.Any(gpp => path.StartsWith(gpp, StringComparison.OrdinalIgnoreCase))) {
+                return base.Href("~/" + _tenantPrefix + path.Substring(1), pathParts);
             }
 
             return base.Href(path, pathParts);
