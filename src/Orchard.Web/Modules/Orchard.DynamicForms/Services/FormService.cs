@@ -245,7 +245,7 @@ namespace Orchard.DynamicForms.Services {
             workbookpart.Workbook.Save();
 
             // Close the document.
-            spreadsheetDocument.Close();
+            spreadsheetDocument.Dispose();
             stream.Seek(0, SeekOrigin.Begin);
 
             return stream;
