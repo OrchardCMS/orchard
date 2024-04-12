@@ -225,7 +225,7 @@ namespace Orchard.FileSystems.Media {
             // We are dealing with a folder here, but GetFileName returns the last path segment, which in this case is
             // the folder name.
             if (FolderNameContainsInvalidCharacters(Path.GetFileName(path))) {
-                throw new ArgumentException(T("The directory name contains invalid character(s)").ToString());
+                throw new InvalidNameCharacterException(T("The directory name contains invalid character(s)").ToString());
             }
 
             DirectoryInfo directoryInfo = new DirectoryInfo(MapStorage(path));
@@ -264,7 +264,7 @@ namespace Orchard.FileSystems.Media {
             // We are dealing with a folder here, but GetFileName returns the last path segment, which in this case is
             // the folder name.
             if (FolderNameContainsInvalidCharacters(Path.GetFileName(newPath))) {
-                throw new ArgumentException(T("The new directory name contains invalid character(s)").ToString());
+                throw new InvalidNameCharacterException(T("The new directory name contains invalid character(s)").ToString());
             }
 
             DirectoryInfo targetDirectory = new DirectoryInfo(MapStorage(newPath));
@@ -333,7 +333,7 @@ namespace Orchard.FileSystems.Media {
             }
 
             if (FileNameContainsInvalidCharacters(Path.GetFileName(newPath))) {
-                throw new ArgumentException(T("The new file name contains invalid character(s)").ToString());
+                throw new InvalidNameCharacterException(T("The new file name contains invalid character(s)").ToString());
             }
 
             FileInfo targetFileInfo = new FileInfo(MapStorage(newPath));
@@ -366,7 +366,7 @@ namespace Orchard.FileSystems.Media {
         /// <returns>The created file.</returns>
         public IStorageFile CreateFile(string path) {
             if (FileNameContainsInvalidCharacters(Path.GetFileName(path))) {
-                throw new ArgumentException(T("The file name contains invalid character(s)").ToString());
+                throw new InvalidNameCharacterException(T("The file name contains invalid character(s)").ToString());
             }
 
             FileInfo fileInfo = new FileInfo(MapStorage(path));

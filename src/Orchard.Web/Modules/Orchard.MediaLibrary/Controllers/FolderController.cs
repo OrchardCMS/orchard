@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Web.Mvc;
 using Orchard.ContentManagement;
+using Orchard.FileSystems.Media;
 using Orchard.Localization;
 using Orchard.Logging;
 using Orchard.MediaLibrary.Models;
@@ -67,15 +68,25 @@ namespace Orchard.MediaLibrary.Controllers {
                 return new HttpUnauthorizedResult();
             }
 
+            var failed = false;
             try {
                 _mediaLibraryService.CreateFolder(viewModel.FolderPath, viewModel.Name);
                 Services.Notifier.Information(T("Media folder created"));
             }
+            catch (InvalidNameCharacterException) {
+                Services.Notifier.Error(T("The folder name contains invalid character(s)."));
+                failed = true;
+            }
             catch (ArgumentException argumentException) {
                 Services.Notifier.Error(T("Creating Folder failed: {0}", argumentException.Message));
+                failed = true;
+            }
+
+            if (failed) {
                 Services.TransactionManager.Cancel();
                 return View(viewModel);
             }
+
             return RedirectToAction("Index", "Admin", new { area = "Orchard.MediaLibrary" });
         }
 
@@ -131,6 +142,10 @@ namespace Orchard.MediaLibrary.Controllers {
             try {
                 _mediaLibraryService.RenameFolder(viewModel.FolderPath, viewModel.Name);
                 Services.Notifier.Information(T("Media folder renamed"));
+            }
+            catch (InvalidNameCharacterException) {
+                Services.Notifier.Error(T("The folder name contains invalid character(s)."));
+                return View(viewModel);
             }
             catch (Exception exception) {
                 Services.Notifier.Error(T("Editing Folder failed: {0}", exception.Message));
