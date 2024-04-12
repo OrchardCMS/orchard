@@ -197,9 +197,8 @@ namespace Orchard.Azure.Services.FileSystems {
         public void CreateFolder(string path) {
             path = ConvertToRelativeUriPath(path);
 
-            if (FileSystemStorageProvider.FolderNameContainsInvalidCharacters(GetFolderName(path), out var invalidCharacters)) {
-                throw new ArgumentException(
-                    string.Format("The directory name contains invalid character(s): {0}", string.Join(", ", invalidCharacters)));
+            if (FileSystemStorageProvider.FolderNameContainsInvalidCharacters(GetFolderName(path))) {
+                throw new ArgumentException("The directory name contains invalid character(s)");
             }
 
             Container.EnsureDirectoryDoesNotExist(String.Concat(_root, path));
@@ -233,9 +232,8 @@ namespace Orchard.Azure.Services.FileSystems {
             path = ConvertToRelativeUriPath(path);
             newPath = ConvertToRelativeUriPath(newPath);
 
-            if (FileSystemStorageProvider.FolderNameContainsInvalidCharacters(GetFolderName(newPath), out var invalidCharacters)) {
-                throw new ArgumentException(
-                    string.Format("The new directory name contains invalid character(s): {0}", string.Join(", ", invalidCharacters)));
+            if (FileSystemStorageProvider.FolderNameContainsInvalidCharacters(GetFolderName(newPath))) {
+                throw new ArgumentException("The new directory name contains invalid character(s)");
             }
 
             if (!path.EndsWith("/"))
@@ -273,9 +271,8 @@ namespace Orchard.Azure.Services.FileSystems {
             path = ConvertToRelativeUriPath(path);
             newPath = ConvertToRelativeUriPath(newPath);
 
-            if (FileSystemStorageProvider.FileNameContainsInvalidCharacters(Path.GetFileName(newPath), out var invalidCharacters)) {
-                throw new ArgumentException(
-                    string.Format("The new file name contains invalid character(s): {0}", string.Join(", ", invalidCharacters)));
+            if (FileSystemStorageProvider.FileNameContainsInvalidCharacters(Path.GetFileName(newPath))) {
+                throw new ArgumentException("The new file name contains invalid character(s)");
             }
 
             Container.EnsureBlobExists(String.Concat(_root, path));
@@ -302,9 +299,8 @@ namespace Orchard.Azure.Services.FileSystems {
         public IStorageFile CreateFile(string path) {
             path = ConvertToRelativeUriPath(path);
 
-            if (FileSystemStorageProvider.FileNameContainsInvalidCharacters(Path.GetFileName(path), out var invalidCharacters)) {
-                throw new ArgumentException(
-                    string.Format("The file name contains invalid character(s): {0}", string.Join(", ", invalidCharacters)));
+            if (FileSystemStorageProvider.FileNameContainsInvalidCharacters(Path.GetFileName(path))) {
+                throw new ArgumentException("The file name contains invalid character(s)");
             }
 
             if (Container.BlobExists(String.Concat(_root, path))) {
