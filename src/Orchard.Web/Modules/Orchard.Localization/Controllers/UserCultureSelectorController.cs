@@ -7,6 +7,7 @@ using Orchard.Mvc.Extensions;
 using System;
 using System.Web;
 using System.Web.Mvc;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.Localization.Controllers {
     [OrchardFeature("Orchard.Localization.CultureSelector")]

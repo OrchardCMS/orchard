@@ -21,6 +21,7 @@ using Orchard.Layouts.Models;
 using Orchard.Layouts.Services;
 using Orchard.Localization.Services;
 using Orchard.Services;
+using Orchard.Utility.Extensions;
 
 namespace Orchard.DynamicForms.Services {
     public class FormService : IFormService {

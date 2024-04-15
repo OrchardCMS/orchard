@@ -332,7 +332,6 @@
     <Compile Include="Migrations.cs" />
     <Compile Include="Handlers\ReadFormValuesHandler.cs" />
     <Compile Include="Services\FormElementEventHandlerBase.cs" />
-    <Compile Include="Helpers\NameValueCollectionExtensions.cs" />
     <Compile Include="Models\Submission.cs" />
     <Compile Include="Permissions.cs" />
     <Compile Include="Services\FormService.cs" />
