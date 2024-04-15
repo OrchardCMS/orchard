@@ -92,7 +92,7 @@ namespace Orchard.Localization.Services {
             return query.List().ToList();
         }
 
-        bool ILocalizationService.TryGetRouteForUrl(string url, out AutoroutePart route) {    
+        bool ILocalizationService.TryGetRouteForUrl(string url, out AutoroutePart route) {
             route = _contentManager.Query<AutoroutePart, AutoroutePartRecord>()
                 .ForVersion(VersionOptions.Published)
                 .Where(r => r.DisplayAlias == url)
@@ -110,7 +110,7 @@ namespace Orchard.Localization.Services {
                 return false;
             }
 
-            IEnumerable<LocalizationPart> localizations = ((ILocalizationService) this).GetLocalizations(routableContent, VersionOptions.Published);
+            IEnumerable<LocalizationPart> localizations = ((ILocalizationService)this).GetLocalizations(routableContent, VersionOptions.Published);
 
             ILocalizableAspect localizationPart = null, siteCultureLocalizationPart = null;
             foreach (LocalizationPart l in localizations) {
