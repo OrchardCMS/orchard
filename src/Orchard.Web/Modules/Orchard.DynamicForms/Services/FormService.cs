@@ -39,16 +39,16 @@ namespace Orchard.DynamicForms.Services {
         private readonly ICultureAccessor _cultureAccessor;
 
         public FormService(
-            ILayoutSerializer serializer, 
-            IClock clock, 
-            IRepository<Submission> submissionRepository, 
-            IFormElementEventHandler elementHandlers, 
-            IContentDefinitionManager contentDefinitionManager, 
-            IBindingManager bindingManager, 
-            IDynamicFormEventHandler formEventHandler, 
+            ILayoutSerializer serializer,
+            IClock clock,
+            IRepository<Submission> submissionRepository,
+            IFormElementEventHandler elementHandlers,
+            IContentDefinitionManager contentDefinitionManager,
+            IBindingManager bindingManager,
+            IDynamicFormEventHandler formEventHandler,
             Lazy<IEnumerable<IElementValidator>> validators,
-            IDateLocalizationServices dateLocalizationServices, 
-            IOrchardServices services, 
+            IDateLocalizationServices dateLocalizationServices,
+            IOrchardServices services,
             ICultureAccessor cultureAccessor) {
 
             _serializer = serializer;
@@ -192,10 +192,10 @@ namespace Orchard.DynamicForms.Services {
 
             // Collect any remaining form values not handled by any specific element.
             var requestForm = _services.WorkContext.HttpContext.Request.Form;
-            var blackList = new[] {"__RequestVerificationToken", "formName", "contentId"};
-            foreach (var key in 
-                from string key in requestForm 
-                where !String.IsNullOrWhiteSpace(key) && !blackList.Contains(key) && values[key] == null 
+            var blackList = new[] { "__RequestVerificationToken", "formName", "contentId" };
+            foreach (var key in
+                from string key in requestForm
+                where !String.IsNullOrWhiteSpace(key) && !blackList.Contains(key) && values[key] == null
                 select key) {
 
                 values.Add(key, requestForm[key]);
@@ -209,9 +209,10 @@ namespace Orchard.DynamicForms.Services {
             var columnNames = new HashSet<string>();
             var dataTable = new DataTable();
 
-            foreach (var key in 
-                from record in records 
-                from string key in record.Item2 where !columnNames.Contains(key) 
+            foreach (var key in
+                from record in records
+                from string key in record.Item2
+                where !columnNames.Contains(key)
                 where !String.IsNullOrWhiteSpace(key)
                 select key) {
                 columnNames.Add(key);
@@ -283,7 +284,7 @@ namespace Orchard.DynamicForms.Services {
             if (form.Publication == "Publish" || !contentTypeSettings.Draftable) {
                 _contentManager.Publish(contentItem);
             }
-            
+
             return contentItem;
         }
 
@@ -308,8 +309,8 @@ namespace Orchard.DynamicForms.Services {
         }
 
         private static void InvokePartBindings(
-            ContentItem contentItem, 
-            IEnumerable<ContentPartBindingDescriptor> lookup, 
+            ContentItem contentItem,
+            IEnumerable<ContentPartBindingDescriptor> lookup,
             PartBindingSettings partBindingSettings,
             string value) {
 
@@ -349,7 +350,7 @@ namespace Orchard.DynamicForms.Services {
             if (field == null)
                 return;
 
-            var fieldBindingDescriptorsQuery = 
+            var fieldBindingDescriptorsQuery =
                 from partBindingDescriptor in lookup
                 where partBindingDescriptor.Part.PartDefinition.Name == partBindingSettings.Name
                 from fieldBindingDescriptor in partBindingDescriptor.FieldBindings

@@ -1,12 +1,12 @@
+using System;
+using System.Web;
+using System.Web.Mvc;
 using Orchard.Autoroute.Models;
 using Orchard.CulturePicker.Services;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Providers;
 using Orchard.Localization.Services;
 using Orchard.Mvc.Extensions;
-using System;
-using System.Web;
-using System.Web.Mvc;
 using Orchard.Utility.Extensions;
 
 namespace Orchard.Localization.Controllers {
@@ -15,9 +15,11 @@ namespace Orchard.Localization.Controllers {
         private readonly ILocalizationService _localizationService;
         private readonly ICultureStorageProvider _cultureStorageProvider;
         public IOrchardServices Services { get; set; }
-        public Localizer T { get; set; }
 
-        public UserCultureSelectorController(IOrchardServices services, ILocalizationService localizationService, ICultureStorageProvider cultureStorageProvider) {
+        public UserCultureSelectorController(
+            IOrchardServices services,
+            ILocalizationService localizationService,
+            ICultureStorageProvider cultureStorageProvider) {
             Services = services;
             _localizationService = localizationService;
             _cultureStorageProvider = cultureStorageProvider;
@@ -34,12 +36,9 @@ namespace Orchard.Localization.Controllers {
             if (string.IsNullOrEmpty(returnUrl))
                 returnUrl = "";
 
-            AutoroutePart currentRoutePart;
-            if (_localizationService.TryGetRouteForUrl(returnUrl, out currentRoutePart)) {
-                AutoroutePart localizedRoutePart;
-                if (_localizationService.TryFindLocalizedRoute(currentRoutePart.ContentItem, culture, out localizedRoutePart)) {
-                    returnUrl = localizedRoutePart.Path;
-                }
+            if (_localizationService.TryGetRouteForUrl(returnUrl, out AutoroutePart currentRoutePart)
+                && _localizationService.TryFindLocalizedRoute(currentRoutePart.ContentItem, culture, out AutoroutePart localizedRoutePart)) {
+                returnUrl = localizedRoutePart.Path;
             }
 
             _cultureStorageProvider.SetCulture(culture);
@@ -47,7 +46,7 @@ namespace Orchard.Localization.Controllers {
                 returnUrl = "~//" + returnUrl;
             }
             query["culture"] = culture;
-            returnUrl += "?" + query.ToQueryString();            
+            returnUrl += "?" + query.ToQueryString();
             ActionResult r = this.RedirectLocal(returnUrl);
             return r;
         }
