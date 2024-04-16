@@ -37,7 +37,7 @@ namespace Orchard.Projections.FilterEditors.Forms {
                     _IgnoreIfEmptyValue: Shape.Checkbox(
                         Id: "IgnoreFilterIfValueIsEmpty",
                         Name: "IgnoreFilterIfValueIsEmpty",
-                        Title: "Ignore filter if value is empty",
+                        Title: T("Ignore filter if value is empty"),
                         Description: T("When enabled, the filter will not be applied if the provided value is or evaluates to empty."),
                         Value: "true"
                     ));
