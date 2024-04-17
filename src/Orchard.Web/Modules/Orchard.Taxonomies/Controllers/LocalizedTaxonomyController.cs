@@ -127,8 +127,6 @@ namespace Orchard.Taxonomies.Controllers {
             return PartialView(templateName, viewModel);
         }
 
-        protected virtual void ApplyPreRequest() {
-            
-        }
+        protected virtual void ApplyPreRequest() { }
     }
 }
