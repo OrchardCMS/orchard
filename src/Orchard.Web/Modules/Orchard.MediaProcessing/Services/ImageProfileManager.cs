@@ -92,14 +92,12 @@ namespace Orchard.MediaProcessing.Services {
 
                 process = true;
             }
-
             // the processd file doesn't exist anymore, process it
             else if (!_storageProvider.FileExists(filePath)) {
                 Logger.Debug("Processed file no longer exists, processing required, profile {0} for image {1}", profileName, path);
 
                 process = true;
             }
-
             // if the original file is more recent, process it
             else {
                 DateTime pathLastUpdated;
@@ -250,7 +248,7 @@ namespace Orchard.MediaProcessing.Services {
 
             return _storageProvider.Combine(
                 _storageProvider.Combine(_profileService.GetNameHashCode(profileName), _profileService.GetNameHashCode(fileLocation)),
-                    filenameWithExtension);
+                filenameWithExtension);
         }
 
         private string NormalizePath(string path) {
