@@ -158,6 +158,7 @@
     <Compile Include="Data\Migration\Schema\DropUniqueConstraintCommand.cs" />
     <Compile Include="Environment\Extensions\Models\LifecycleStatus.cs" />
     <Compile Include="Environment\ShellBuilders\ICompositionStrategy.cs" />
+    <Compile Include="FileSystems\Media\InvalidNameCharacterException.cs" />
     <Compile Include="Mvc\ModelBinders\BooleanBinderProvider.cs" />
     <Compile Include="Mvc\Updater.cs" />
     <Compile Include="Recipes\Models\ConfigurationContext.cs" />
