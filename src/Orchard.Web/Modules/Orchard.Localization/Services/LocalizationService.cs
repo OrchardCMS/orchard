@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Orchard.Autoroute.Models;
 using Orchard.Autoroute.Services;
@@ -84,12 +85,12 @@ namespace Orchard.Localization.Services {
             if (localized.HasTranslationGroup) {
                 int masterContentItemId = localized.MasterContentItem.ContentItem.Id;
 
-                query = query.Where<LocalizationPartRecord>(l =>
-                    l.Id != contentItemId && // Exclude the content
-                    (l.Id == masterContentItemId || l.MasterContentItemId == masterContentItemId));
+                query = query.Where<LocalizationPartRecord>(localization =>
+                    localization.Id != contentItemId && // Exclude the content
+                    (localization.Id == masterContentItemId || localization.MasterContentItemId == masterContentItemId));
             }
             else {
-                query = query.Where<LocalizationPartRecord>(l => l.MasterContentItemId == contentItemId);
+                query = query.Where<LocalizationPartRecord>(localization => localization.MasterContentItemId == contentItemId);
             }
 
             return query.List().ToList();
@@ -118,7 +119,7 @@ namespace Orchard.Localization.Services {
 
             ILocalizableAspect localizationPart = null, siteCultureLocalizationPart = null;
             foreach (var localization in localizations) {
-                if (localization.Culture.Culture == cultureName) {
+                if (localization.Culture.Culture.Equals(cultureName, StringComparison.InvariantCultureIgnoreCase)) {
                     localizationPart = localization;
 
                     break;
