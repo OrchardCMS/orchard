@@ -133,15 +133,9 @@ namespace Orchard.Localization.Services {
                 localizationPart = siteCultureLocalizationPart;
             }
 
-            if (localizationPart == null) {
-                localizedRoute = null;
+            localizedRoute = localizationPart?.As<AutoroutePart>();
 
-                return false;
-            }
-
-            localizedRoute = localizationPart.ContentItem.Parts.Single(p => p is AutoroutePart).As<AutoroutePart>();
-
-            return true;
+            return localizedRoute != null;
         }
     }
 }
