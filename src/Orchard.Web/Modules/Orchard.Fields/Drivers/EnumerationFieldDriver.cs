@@ -33,7 +33,7 @@ namespace Orchard.Fields.Drivers {
                 if (part.IsNew() && string.IsNullOrEmpty(field.Value)) {
                     var settings = field.PartFieldDefinition.Settings.GetModel<EnumerationFieldSettings>();
                     if (!string.IsNullOrWhiteSpace(settings.DefaultValue)) {
-                        field.Value = settings.DefaultValue;
+                        field.SelectedValues = new string[] { settings.DefaultValue };
                     }
                 }
 
