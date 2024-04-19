@@ -89,10 +89,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdminMenu.cs" />
+    <Compile Include="Controllers\AdminCultureSelectorController.cs" />
     <Compile Include="Extensions\Constants.cs" />
     <Compile Include="Controllers\AdminController.cs" />
     <Compile Include="Controllers\TransliterationAdminController.cs" />
-    <Compile Include="Controllers\AdminCultureSelectorController.cs" />
+    <Compile Include="Controllers\UserCultureSelectorController.cs" />
     <Compile Include="Extensions\MetaDataExtensions.cs" />
     <Compile Include="Handlers\LocalizationCultureNeutralityHandler.cs" />
     <Compile Include="Models\TransliterationSpecificationRecord.cs" />
@@ -120,6 +121,7 @@
     <Compile Include="Services\LocalizationService.cs" />
     <Compile Include="Services\TransliterationService.cs" />
     <Compile Include="Events\TransliterationSlugEventHandler.cs" />
+    <Compile Include="Services\Utils.cs" />
     <Compile Include="Settings\LocalizationCultureNeutralityEditorEvents.cs" />
     <Compile Include="Settings\LocalizationCultureNeutralitySettings.cs" />
     <Compile Include="ViewModels\ContentLocalizationsViewModel.cs" />
@@ -196,8 +198,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
+    <Content Include="Views\UserCultureSelector.cshtml" />
     <Content Include="Views\DefinitionTemplates\LocalizationCultureNeutralitySettings.cshtml" />
   </ItemGroup>
   <PropertyGroup>
