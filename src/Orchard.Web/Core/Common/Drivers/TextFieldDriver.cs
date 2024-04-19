@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
@@ -74,12 +72,12 @@ namespace Orchard.Core.Common.Drivers {
 
                 if (settings.MaxLength > 0) {
 
-                    var value = new HtmlString(_htmlFilters.Aggregate(field.Value, (text, filter) => filter.ProcessContent(text, settings.Flavor)))
+                    var value = new HtmlString(_htmlFilterProcessor.ProcessFilters(field.Value, settings.Flavor, part))
                         .ToString().RemoveTags();
 
                     if (value.Length > settings.MaxLength) {
                         updater.AddModelError("Text", T("The maximum allowed length for the field {0} is {1}", T(field.DisplayName), settings.MaxLength));
-                    }                    
+                    }
                 }
             }
 
