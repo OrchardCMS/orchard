@@ -35,7 +35,7 @@ namespace Orchard.Taxonomies.Controllers {
         }
 
         [OutputCache(NoStore = true, Duration = 0)]
-        public ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
+        public virtual ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
             return GetTaxonomyInternal(contentTypeName, taxonomyFieldName, contentId, culture, selectedValues);
         }
 
