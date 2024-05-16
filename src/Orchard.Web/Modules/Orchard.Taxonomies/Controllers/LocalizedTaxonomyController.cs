@@ -125,7 +125,5 @@ namespace Orchard.Taxonomies.Controllers {
             var templateName = autocomplete ? "../EditorTemplates/Fields/TaxonomyField.Autocomplete" : "../EditorTemplates/Fields/TaxonomyField";
             return PartialView(templateName, viewModel);
         }
-
-        protected virtual void ApplyPreRequest() { }
     }
 }
