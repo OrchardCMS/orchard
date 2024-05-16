@@ -24,7 +24,9 @@ namespace Orchard.Taxonomies.Controllers {
             _requestContext = requestContext;
         }
 
-        protected override void ApplyPreRequest() {
+        [OutputCache(NoStore = true, Duration = 0)]
+        public override ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
+            AdminFilter.Apply(_requestContext);
             AdminFilter.Apply(_requestContext);
         }
     }
