@@ -140,7 +140,7 @@ namespace Orchard.Blogs.Controllers {
 
         [HttpPost, ActionName("Edit")]
         [Mvc.FormValueRequired("submit.Delete")]
-        public ActionResult EditDeletePOST (int blogId, int postId, string returnUrl) {
+        public ActionResult EditDeletePOST(int blogId, int postId, string returnUrl) {
             return Delete(blogId, postId);
         }
 
