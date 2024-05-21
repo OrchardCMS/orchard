@@ -1,5 +1,5 @@
 ﻿using System.Web.Mvc;
-using System.Web.Routing;
+﻿﻿using System.Web.Routing;
 using Orchard.ContentManagement.MetaData;
 using Orchard.Environment.Extensions;
 using Orchard.Localization.Services;
@@ -25,10 +25,9 @@ namespace Orchard.Taxonomies.Controllers {
         }
 
         [OutputCache(NoStore = true, Duration = 0)]
-        public new ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
+        public override ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
             AdminFilter.Apply(_requestContext);
-
-            return GetTaxonomyInternal(contentTypeName, taxonomyFieldName, contentId, culture, selectedValues);
+            return base.GetTaxonomy(contentTypeName, taxonomyFieldName, contentId, culture, selectedValues);
         }
     }
 }

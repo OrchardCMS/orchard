@@ -35,11 +35,11 @@ namespace Orchard.Taxonomies.Controllers {
         }
 
         [OutputCache(NoStore = true, Duration = 0)]
-        public ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
+        public virtual ActionResult GetTaxonomy(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
             return GetTaxonomyInternal(contentTypeName, taxonomyFieldName, contentId, culture, selectedValues);
         }
 
-        protected ActionResult GetTaxonomyInternal (string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
+        protected ActionResult GetTaxonomyInternal(string contentTypeName, string taxonomyFieldName, int contentId, string culture, string selectedValues) {
             var viewModel = new TaxonomyFieldViewModel();
             bool autocomplete = false;
             var contentDefinition = _contentDefinitionManager.GetTypeDefinition(contentTypeName);
