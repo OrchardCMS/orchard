@@ -12,3 +12,4 @@ Features:
         Name: Media Processing HTML Filter
         Description: Dynamically resizes images to their height and width attributes
         Category: Media
+        Dependencies: Orchard.MediaProcessing
