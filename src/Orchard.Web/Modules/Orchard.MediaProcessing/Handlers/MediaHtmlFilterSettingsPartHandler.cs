@@ -12,14 +12,17 @@ namespace Orchard.MediaProcessing.Handlers {
             T = NullLocalizer.Instance;
 
             Filters.Add(new ActivatingFilter<MediaHtmlFilterSettingsPart>("Site"));
-            Filters.Add(new TemplateFilterForPart<MediaHtmlFilterSettingsPart>("MediaHtmlFilterSettings", "Parts.MediaProcessing.MediaHtmlFilterSettings", "media"));
+            Filters.Add(new TemplateFilterForPart<MediaHtmlFilterSettingsPart>(
+                "MediaHtmlFilterSettings",
+                "Parts.MediaProcessing.MediaHtmlFilterSettings",
+                "media"));
         }
 
         public Localizer T { get; set; }
 
         protected override void GetItemMetadata(GetContentItemMetadataContext context) {
-            if (context.ContentItem.ContentType != "Site")
-                return;
+            if (context.ContentItem.ContentType != "Site") return;
+
             base.GetItemMetadata(context);
             context.Metadata.EditorGroupInfo.Add(new GroupInfo(T("Media")));
         }

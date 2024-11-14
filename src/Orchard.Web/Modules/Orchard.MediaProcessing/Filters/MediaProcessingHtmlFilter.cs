@@ -1,28 +1,25 @@
-﻿using HtmlAgilityPack;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using HtmlAgilityPack;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
-using Orchard.FileSystems.Media;
 using Orchard.Forms.Services;
 using Orchard.Logging;
 using Orchard.MediaProcessing.Models;
 using Orchard.MediaProcessing.Services;
 using Orchard.Services;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.IO;
 
 namespace Orchard.MediaProcessing.Filters {
     /// <summary>
-    /// Resizes any images in HTML provided by parts that support IHtmlFilter and sets an alt text if not already supplied
+    /// Resizes any images in HTML provided by parts that support IHtmlFilter and sets an alt text if not already supplied.
     /// </summary>
     [OrchardFeature(Features.OrchardMediaProcessingHtmlFilter)]
     public class MediaProcessingHtmlFilter : IHtmlFilter {
 
         private readonly IWorkContextAccessor _wca;
-        private readonly IImageProcessingFileNameProvider _fileNameProvider;
         private readonly IImageProfileManager _profileManager;
-        private readonly IStorageProvider _storageProvider;
 
         private MediaHtmlFilterSettingsPart _settingsPart;
         private Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
@@ -30,17 +27,17 @@ namespace Orchard.MediaProcessing.Filters {
             { ".jpg", "jpg"  },
             { ".png", null }};
 
-        public MediaProcessingHtmlFilter(IWorkContextAccessor wca, IImageProcessingFileNameProvider fileNameProvider, IImageProfileManager profileManager, IStorageProvider storageProvider) {
-            _fileNameProvider = fileNameProvider;
+        public MediaProcessingHtmlFilter(IWorkContextAccessor wca, IImageProfileManager profileManager) {
             _profileManager = profileManager;
-            _storageProvider = storageProvider;
             _wca = wca;
+
             Logger = NullLogger.Instance;
         }
 
         public ILogger Logger { get; set; }
 
-        public MediaHtmlFilterSettingsPart Settings { get {
+        public MediaHtmlFilterSettingsPart Settings {
+            get {
                 if (_settingsPart == null) {
                     _settingsPart = _wca.GetContext().CurrentSite.As<MediaHtmlFilterSettingsPart>();
                 }
@@ -52,12 +49,14 @@ namespace Orchard.MediaProcessing.Filters {
             if (!string.IsNullOrEmpty(text) && context.Flavor == "html") {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(text);
+
                 foreach (var node in doc.DocumentNode.DescendantsAndSelf("img")) {
                     ProcessImageContent(node);
                     if (Settings.PopulateAlt) {
                         ProcessImageAltContent(node);
                     }
                 }
+
                 return doc.DocumentNode.OuterHtml;
             }
             else {
@@ -76,9 +75,12 @@ namespace Orchard.MediaProcessing.Filters {
             var width = GetAttributeValueInt(node, "width");
             var height = GetAttributeValueInt(node, "height");
 
-            if (width > 0 && height > 0 && !string.IsNullOrEmpty(src) && !src.Contains("_Profiles") && _validExtensions.ContainsKey(ext)) {
+            if (width > 0 && height > 0
+                && !string.IsNullOrEmpty(src)
+                && !src.Contains("_Profiles")
+                && _validExtensions.ContainsKey(ext)) {
                 try {
-                    //If img has a width, height, not already in _Profiles and a valid ext, process the image.
+                    // If img has a width, height, not already in _Profiles and a valid ext, process the image.
                     node.Attributes["src"].Value = TryGetImageProfilePath(src, ext, width, height);
                 }
                 catch (Exception ex) {
@@ -88,18 +90,24 @@ namespace Orchard.MediaProcessing.Filters {
         }
 
         private string TryGetImageProfilePath(string src, string ext, int width, int height) {
-            
-            var filters = new List<FilterRecord>();
-            filters.Add(CreateResizeFilter(width * Settings.DensityThreshold, height * Settings.DensityThreshold)); // Factor in a min height and width with respect to higher pixel density devices.
+            var filters = new List<FilterRecord> {
+                // Factor in a min height and width with respect to higher pixel density devices.
+                CreateResizeFilter(width * Settings.DensityThreshold, height * Settings.DensityThreshold)
+            };
 
             // If the ext supports compression, also set the quality.
             if (_validExtensions[ext] != null && Settings.Quality < 100) {
                 filters.Add(CreateFormatFilter(Settings.Quality, _validExtensions[ext]));
             }
 
-            var profileName = string.Format("Transform_Resize_w_{0}_h_{1}_m_Stretch_a_MiddleCenter_c_{2}_d_@{3}x", width, height, Settings.Quality, Settings.DensityThreshold);
-            return _profileManager.GetImageProfileUrl(src, profileName, null, filters.ToArray());
+            var profileName = string.Format(
+                "Transform_Resize_w_{0}_h_{1}_m_Stretch_a_MiddleCenter_c_{2}_d_@{3}x",
+                width,
+                height,
+                Settings.Quality,
+                Settings.DensityThreshold);
 
+            return _profileManager.GetImageProfileUrl(src, profileName, null, filters.ToArray());
         }
 
         private FilterRecord CreateResizeFilter(int width, int height) {
@@ -137,20 +145,17 @@ namespace Orchard.MediaProcessing.Filters {
         private void ProcessImageAltContent(HtmlNode node) {
             var src = GetAttributeValue(node, "src");
             var alt = GetAttributeValue(node, "alt");
+
             if (string.IsNullOrEmpty(alt) && !string.IsNullOrEmpty(src)) {
                 var text = Path.GetFileNameWithoutExtension(src).Replace("-", " ").Replace("_", " ");
                 SetAttributeValue(node, "alt", text);
             }
         }
 
-        private string GetAttributeValue(HtmlNode node, string name) {
-            return node.Attributes[name] == null ? null : node.Attributes[name].Value;
-        }
+        private string GetAttributeValue(HtmlNode node, string name) => node.Attributes[name]?.Value;
 
-        private int GetAttributeValueInt(HtmlNode node, string name) {
-            int val = 0;
-            return node.Attributes[name] == null ? 0 : int.TryParse(node.Attributes[name].Value, out val) ? val : 0;
-        }
+        private int GetAttributeValueInt(HtmlNode node, string name) =>
+            node.Attributes[name] == null ? 0 : int.TryParse(node.Attributes[name].Value, out int val) ? val : 0;
 
         private void SetAttributeValue(HtmlNode node, string name, string value) {
             if (node.Attributes.Contains(name)) {
