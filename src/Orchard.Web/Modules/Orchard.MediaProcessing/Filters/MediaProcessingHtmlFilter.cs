@@ -7,7 +7,6 @@ using Orchard.Logging;
 using Orchard.MediaProcessing.Models;
 using Orchard.MediaProcessing.Services;
 using Orchard.Services;
-using Orchard.Settings;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -49,8 +48,8 @@ namespace Orchard.MediaProcessing.Filters {
             }
         }
 
-        public string ProcessContent(string text, string flavor) {
-            if (!string.IsNullOrEmpty(text) && flavor == "html") {
+        public string ProcessContent(string text, HtmlFilterContext context) {
+            if (!string.IsNullOrEmpty(text) && context.Flavor == "html") {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(text);
                 foreach (var node in doc.DocumentNode.DescendantsAndSelf("img")) {
