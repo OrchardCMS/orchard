@@ -75,19 +75,28 @@ namespace Orchard.Azure.Services.FileSystems {
             // Get and create the container if it does not exist
             // The container is named with DNS naming restrictions (i.e. all lower case)
             _container = _blobClient.GetContainerReference(ContainerName);
-
+ 
+            ////Set the default service version to the current version "2015-12-11" so that newer features and optimizations are enabled on the images and videos stored in the blob storage.
+            var properties = _blobClient.GetServiceProperties();
+            if (properties.DefaultServiceVersion == null) {
+                properties.DefaultServiceVersion = "2015-12-11";
+                _blobClient.SetServiceProperties(properties);
+            }
+            
             _container.CreateIfNotExists(_isPrivate ? BlobContainerPublicAccessType.Off : BlobContainerPublicAccessType.Blob);
         }
 
         private static string ConvertToRelativeUriPath(string path) {
             var newPath = path.Replace(@"\", "/");
 
-            if (newPath.StartsWith("/") || newPath.StartsWith("http://") || newPath.StartsWith("https://")) {
+            if (newPath.StartsWith("/", StringComparison.OrdinalIgnoreCase) || newPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || newPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentException("Path must be relative");
             }
 
             return newPath;
         }
+
+        private static string GetFolderName(string path) => path.Substring(path.LastIndexOf('/') + 1);
 
         public string Combine(string path1, string path2) {
             if (path1 == null) {
@@ -106,7 +115,7 @@ namespace Orchard.Azure.Services.FileSystems {
                 return path2;
             }
 
-            if (path2.StartsWith("http://") || path2.StartsWith("https://")) {
+            if (path2.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path2.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) {
                 return path2;
             }
 
@@ -141,10 +150,10 @@ namespace Orchard.Azure.Services.FileSystems {
             }
 
             return BlobClient.ListBlobs(prefix)
-                        .OfType<CloudBlockBlob>()
-                        .Where(blobItem => !blobItem.Uri.AbsoluteUri.EndsWith(FolderEntry))
-                        .Select(blobItem => new AzureBlobFileStorage(blobItem, _absoluteRoot))
-                        .ToArray();
+                .OfType<CloudBlockBlob>()
+                .Where(blobItem => !blobItem.Uri.AbsoluteUri.EndsWith(FolderEntry))
+                .Select(blobItem => new AzureBlobFileStorage(blobItem, _absoluteRoot))
+                .ToArray();
         }
 
         public IEnumerable<IStorageFolder> ListFolders(string path) {
@@ -194,6 +203,11 @@ namespace Orchard.Azure.Services.FileSystems {
 
         public void CreateFolder(string path) {
             path = ConvertToRelativeUriPath(path);
+
+            if (FileSystemStorageProvider.FolderNameContainsInvalidCharacters(GetFolderName(path))) {
+                throw new InvalidNameCharacterException("The directory name contains invalid character(s)");
+            }
+
             Container.EnsureDirectoryDoesNotExist(String.Concat(_root, path));
 
             // Creating a virtually hidden file to make the directory an existing concept
@@ -225,6 +239,20 @@ namespace Orchard.Azure.Services.FileSystems {
             path = ConvertToRelativeUriPath(path);
             newPath = ConvertToRelativeUriPath(newPath);
 
+            if (FileSystemStorageProvider.FolderNameContainsInvalidCharacters(GetFolderName(newPath))) {
+                throw new InvalidNameCharacterException("The new directory name contains invalid character(s)");
+            }
+
+            // Workaround for https://github.com/Azure/azure-storage-net/issues/892.
+            // Renaming a folder by only changing the casing corrupts all the files in the folder.
+            if (path.Equals(newPath, StringComparison.OrdinalIgnoreCase)) {
+                var tempPath = Guid.NewGuid().ToString() + "/";
+
+                RenameFolder(path, tempPath);
+
+                path = tempPath;
+            }
+
             if (!path.EndsWith("/"))
                 path += "/";
 
@@ -239,7 +267,8 @@ namespace Orchard.Azure.Services.FileSystems {
                 }
 
                 if (blob is CloudBlobDirectory) {
-                    string foldername = blob.Uri.Segments.Last();
+                    var blobDir = (CloudBlobDirectory)blob;
+                    string foldername = blobDir.Prefix.Substring(blobDir.Parent.Prefix.Length);
                     string source = String.Concat(path, foldername);
                     string destination = String.Concat(newPath, foldername);
                     RenameFolder(source, destination);
@@ -258,6 +287,10 @@ namespace Orchard.Azure.Services.FileSystems {
         public void RenameFile(string path, string newPath) {
             path = ConvertToRelativeUriPath(path);
             newPath = ConvertToRelativeUriPath(newPath);
+
+            if (FileSystemStorageProvider.FileNameContainsInvalidCharacters(Path.GetFileName(newPath))) {
+                throw new InvalidNameCharacterException("The new file name contains invalid character(s)");
+            }
 
             Container.EnsureBlobExists(String.Concat(_root, path));
             Container.EnsureBlobDoesNotExist(String.Concat(_root, newPath));
@@ -282,6 +315,10 @@ namespace Orchard.Azure.Services.FileSystems {
 
         public IStorageFile CreateFile(string path) {
             path = ConvertToRelativeUriPath(path);
+
+            if (FileSystemStorageProvider.FileNameContainsInvalidCharacters(Path.GetFileName(path))) {
+                throw new InvalidNameCharacterException("The file name contains invalid character(s)");
+            }
 
             if (Container.BlobExists(String.Concat(_root, path))) {
                 throw new ArgumentException("File " + path + " already exists");
@@ -370,10 +407,7 @@ namespace Orchard.Azure.Services.FileSystems {
                 _rootPath = rootPath;
             }
 
-            public string GetName() {
-                var path = GetPath();
-                return path.Substring(path.LastIndexOf('/') + 1);
-            }
+            public string GetName() => GetFolderName(GetPath());
 
             public string GetPath() {
                 return _blob.Uri.ToString().Substring(_rootPath.Length).Trim('/');
@@ -398,11 +432,12 @@ namespace Orchard.Azure.Services.FileSystems {
                 long size = 0;
 
                 foreach (var blobItem in directoryBlob.ListBlobs()) {
-                    if (blobItem is CloudBlockBlob)
-                        size += ((CloudBlockBlob)blobItem).Properties.Length;
-
-                    if (blobItem is CloudBlobDirectory)
-                        size += GetDirectorySize((CloudBlobDirectory)blobItem);
+                    if (blobItem is CloudBlockBlob blob) {
+                        size += blob.Properties.Length;
+                    }
+                    else if (blobItem is CloudBlobDirectory directory) {
+                        size += GetDirectorySize(directory);
+                    }
                 }
 
                 return size;

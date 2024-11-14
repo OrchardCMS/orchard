@@ -1,5 +1,10 @@
 ﻿@{
-    var htmlAttributes = new Dictionary<string, object>();
+    var propertyName = Model.PropertyName != null ? (string)Model.PropertyName : "Text";
+    var htmlAttributes = (Dictionary<string, object>)Model.HtmlAttributes;
+
+    if (htmlAttributes == null) {
+        htmlAttributes = new Dictionary<string, object>();
+    }
 
     if (Model.Required == true) {
         htmlAttributes["required"] = "required";
@@ -14,4 +19,4 @@
     }
 }
 
-@Html.TextArea("Text", (string)Model.Text, 25, 80, htmlAttributes)
+@Html.TextArea(propertyName, (string)Model.Text, 25, 80, htmlAttributes)

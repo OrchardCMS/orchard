@@ -6,8 +6,6 @@
 @using Orchard.Utility.Extensions
 
 @{
-    var urlPrefix = WorkContext.Resolve<ShellSettings>().RequestUrlPrefix;
-
     Layout.Title = T("Manage Aliases").Text;
     var aliasService = WorkContext.Resolve<IAliasService>();
     AdminIndexOptions options = Model.Options;
@@ -44,7 +42,6 @@
                 <tr>                    
                     <th scope="col">@T("Alias")</th>
                     <th scope="col">@T("Route")</th>                    
-                    <th scope="col">&nbsp;</th>
                 </tr>
             </thead>
             @foreach (var aliasEntry in Model.AliasEntries) {
@@ -60,10 +57,10 @@
                 <tr>
                     <td>
                         <input type="hidden" value="@alias.Path" name="@Html.FieldNameFor(m => Model.AliasEntries[index].Alias.Path)" />
-                        @Html.Link(alias.Path == String.Empty ? "/" : alias.Path, Href("~/" + urlPrefix + alias.Path))
+                        @Html.Link(alias.Path == String.Empty ? "/" : alias.Path, Href("~/" + alias.Path))
                     </td>
                     <td>
-                        @Html.Link(url, Href("~/" + urlPrefix + "/" + url))
+                        @Html.Link(url, Href("~/" + url))
                     </td>                   
                 </tr>
             }
