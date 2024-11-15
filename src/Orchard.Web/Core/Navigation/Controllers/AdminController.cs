@@ -249,6 +249,44 @@ namespace Orchard.Core.Navigation.Controllers {
             });
         }
 
+        [HttpPost]
+        // Copy of Contents/AdminController/Publish, but with different permission check and redirect.
+        public ActionResult Publish(int id) {
+            var menuPart = _contentManager.GetLatest<MenuPart>(id);
+            if (menuPart == null)
+                return HttpNotFound();
+
+            if (!_authorizer.Authorize(Permissions.ManageMenus, menuPart.Menu, T("Couldn't manage the menu")))
+                return new HttpUnauthorizedResult();
+
+            _contentManager.Publish(menuPart.ContentItem);
+
+            _notifier.Information(string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
+                ? T("Your content has been published.")
+                : T("Your {0} has been published.", menuPart.TypeDefinition.DisplayName));
+
+            return RedirectToAction("Index", new { menuId = menuPart.Menu.Id });
+        }
+
+        [HttpPost]
+        // Copy of Contents/AdminController/Unpublish, but with different permission check and redirect.
+        public ActionResult Unpublish(int id) {
+            var menuPart = _contentManager.GetLatest<MenuPart>(id);
+            if (menuPart == null)
+                return HttpNotFound();
+
+            if (!_authorizer.Authorize(Permissions.ManageMenus, menuPart.Menu, T("Couldn't manage the menu")))
+                return new HttpUnauthorizedResult();
+
+            _contentManager.Unpublish(menuPart.ContentItem);
+
+            _notifier.Information(string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
+                ? T("Your content has been unpublished.")
+                : T("Your {0} has been unpublished.", menuPart.TypeDefinition.DisplayName));
+
+            return RedirectToAction("Index", new { menuId = menuPart.Menu.Id });
+        }
+
         private MenuItemEntry CreateMenuItemEntries(MenuPart menuPart) {
             return new MenuItemEntry {
                 MenuItemId = menuPart.Id,
