@@ -13,7 +13,7 @@
         <label for="publishActions">@T("Actions:")</label>
         <select id="publishActions" name="@Html.NameOf(m => m.BulkAction)">
             @Html.SelectOption(Model.BulkAction, TaxonomiesAdminIndexBulkAction.None, T("Choose action...").ToString())
-            @Html.SelectOption(Model.BulkAction, TaxonomiesAdminIndexBulkAction.Delete, T("Remove").ToString())
+            @Html.SelectOption(Model.BulkAction, TaxonomiesAdminIndexBulkAction.Delete, T("Delete").ToString())
         </select>
         <input class="button" type="submit" name="submit.BulkEdit" value="@T("Apply")" />
     </fieldset>
@@ -50,9 +50,13 @@
                         else {
                             @Html.ItemDisplayText(taxonomyEntry.ContentItem)
                         }
+                        @if (taxonomyEntry.HasDraft) {
+                            <text>@T(" (Draft)")</text>
+                        }
                     </td>
                     <td>
                         @if (!taxonomyEntry.IsInternal) {
+                            @Html.ItemDisplayLink(T("View").Text, taxonomyEntry.ContentItem) <text>|</text>
                             if (Authorizer.Authorize(Permissions.CreateTaxonomy)) {
                                 @Html.ItemEditLink(T("Edit").Text, taxonomyEntry.ContentItem, new { ReturnUrl = Request.RawUrl }) <text>|</text>
                             }

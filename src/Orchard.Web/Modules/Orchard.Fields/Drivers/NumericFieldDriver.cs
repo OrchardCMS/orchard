@@ -102,12 +102,17 @@ namespace Orchard.Fields.Drivers {
         }
 
         protected override void Importing(ContentPart part, NumericField field, ImportContentContext context) {
-            context.ImportAttribute(field.FieldDefinition.Name + "." + field.Name, "Value", v => field.Value = decimal.Parse(v, CultureInfo.InvariantCulture), () => field.Value = (decimal?)null);
+            Action empty = (() => field.Value = (decimal?)null);
+            var element = context.Data.Element(field.FieldDefinition.Name + "." + field.Name);
+            // If element is not in the ImportContentContext, field must not be reset.
+            if (element == null) {
+                empty = () => { };
+            }
+            context.ImportAttribute(field.FieldDefinition.Name + "." + field.Name, "Value", v => field.Value = decimal.Parse(v, CultureInfo.InvariantCulture), empty);
         }
 
         protected override void Exporting(ContentPart part, NumericField field, ExportContentContext context) {
-            if (field.Value.HasValue)
-                context.Element(field.FieldDefinition.Name + "." + field.Name).SetAttributeValue("Value", field.Value.Value.ToString(CultureInfo.InvariantCulture));
+            context.Element(field.FieldDefinition.Name + "." + field.Name).SetAttributeValue("Value", !field.Value.HasValue ? String.Empty : field.Value.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         protected override void Cloning(ContentPart part, NumericField originalField, NumericField cloneField, CloneContentContext context) {

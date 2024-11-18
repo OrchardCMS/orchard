@@ -22,21 +22,30 @@ namespace Orchard.ContentManagement {
         private ICacheManager _cacheManager;
         private ISignals _signals;
         private IRepository<ContentTypeRecord> _contentTypeRepository;
+        private IEnumerable<IGlobalCriteriaProvider> _globalCriteriaList;
 
         public DefaultContentQuery(
             IContentManager contentManager, 
             ITransactionManager transactionManager, 
             ICacheManager cacheManager,
             ISignals signals,
-            IRepository<ContentTypeRecord> contentTypeRepository) {
+            IRepository<ContentTypeRecord> contentTypeRepository,
+            IEnumerable<IGlobalCriteriaProvider> globalCriteriaList) {
             _transactionManager = transactionManager;
             ContentManager = contentManager;
             _cacheManager = cacheManager;
             _signals = signals;
             _contentTypeRepository = contentTypeRepository;
+            _globalCriteriaList = globalCriteriaList;
         }
 
         public IContentManager ContentManager { get; private set; }
+
+        private void BeforeExecuteQuery(ICriteria contentItemVersionCriteria) {
+            foreach(var criteria in _globalCriteriaList) {
+                criteria.AddCriteria(contentItemVersionCriteria);
+            }
+        }
 
         ISession BindSession() {
             if (_session == null)
@@ -177,8 +186,8 @@ namespace Orchard.ContentManagement {
             
             criteria.ApplyVersionOptionsRestrictions(_versionOptions);
 
-            criteria.SetFetchMode("ContentItemRecord", FetchMode.Eager);
-            criteria.SetFetchMode("ContentItemRecord.ContentType", FetchMode.Eager);
+            criteria.Fetch(SelectMode.Fetch, "ContentItemRecord");
+            criteria.Fetch(SelectMode.Fetch, "ContentItemRecord.ContentType");
 
             // TODO: put 'removed false' filter in place
             if (skip != 0) {
@@ -187,6 +196,8 @@ namespace Orchard.ContentManagement {
             if (count != 0) {
                 criteria = criteria.SetMaxResults(count);
             }
+
+            BeforeExecuteQuery(criteria);
 
             return criteria
                 .List<ContentItemVersionRecord>()
@@ -199,6 +210,7 @@ namespace Orchard.ContentManagement {
             criteria.ClearOrders();
 
             criteria.ApplyVersionOptionsRestrictions(_versionOptions);
+            BeforeExecuteQuery(criteria);
 
             return criteria.SetProjection(Projections.RowCount()).UniqueResult<Int32>();
         }
@@ -222,13 +234,13 @@ namespace Orchard.ContentManagement {
 
             // locate hints that match properties in the ContentItemVersionRecord
             foreach (var hit in contentItemVersionMetadata.PropertyNames.Where(hintDictionary.ContainsKey).SelectMany(key => hintDictionary[key])) {
-                contentItemVersionCriteria.SetFetchMode(hit.Hint, FetchMode.Eager);
+                contentItemVersionCriteria.Fetch(SelectMode.Fetch, hit.Hint);
                 hit.Segments.Take(hit.Segments.Count() - 1).Aggregate(contentItemVersionCriteria, ExtendCriteria);
             }
 
             // locate hints that match properties in the ContentItemRecord
             foreach (var hit in contentItemMetadata.PropertyNames.Where(hintDictionary.ContainsKey).SelectMany(key => hintDictionary[key])) {
-                contentItemVersionCriteria.SetFetchMode("ContentItemRecord." + hit.Hint, FetchMode.Eager);
+                contentItemVersionCriteria.Fetch(SelectMode.Fetch, "ContentItemRecord." + hit.Hint);
                 hit.Segments.Take(hit.Segments.Count() - 1).Aggregate(contentItemCriteria, ExtendCriteria);
             }
 

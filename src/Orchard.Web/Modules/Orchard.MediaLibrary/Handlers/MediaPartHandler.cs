@@ -1,29 +1,54 @@
 ﻿using System;
-using Orchard.ContentManagement.Handlers;
-using Orchard.Data;
-using Orchard.MediaLibrary.Services;
-using Orchard.MediaLibrary.Models;
 using System.IO;
-using Orchard.FileSystems.Media;
+using System.Linq;
 using Orchard.ContentManagement;
+using Orchard.ContentManagement.Handlers;
+using Orchard.ContentManagement.MetaData;
+using Orchard.Core.Title.Models;
+using Orchard.Data;
+using Orchard.FileSystems.Media;
+using Orchard.MediaLibrary.Models;
+using Orchard.MediaLibrary.Services;
 
 namespace Orchard.MediaLibrary.Handlers {
     public class MediaPartHandler : ContentHandler {
         private readonly IMediaLibraryService _mediaLibraryService;
         private readonly IStorageProvider _storageProvider;
+        private readonly IContentDefinitionManager _contentDefinitionManager;
+        private readonly IContentManager _contentManager;
 
         public MediaPartHandler(
             IStorageProvider storageProvider,
             IMediaLibraryService mediaLibraryService,
-            IRepository<MediaPartRecord> repository) {
+            IRepository<MediaPartRecord> repository,
+            IContentDefinitionManager contentDefinitionManager,
+            IContentManager contentManager) {
             _storageProvider = storageProvider;
             _mediaLibraryService = mediaLibraryService;
+            _contentDefinitionManager = contentDefinitionManager;
+            _contentManager = contentManager;
 
             Filters.Add(StorageFilter.For(repository));
+            Filters.Add(new ActivatingFilter<TitlePart>(contentType => {
+                var typeDefinition = _contentDefinitionManager.GetTypeDefinition(contentType);
+                // To avoid NRE when the handler runs for ad-hoc content types, e.g. MediaLibraryExplorer.
+                return typeDefinition == null ?
+                    false :
+                    typeDefinition.Parts.Any(contentTypePartDefinition =>
+                        contentTypePartDefinition.PartDefinition.Name == typeof(MediaPart).Name);
+            }));
+
             OnRemoving<MediaPart>((context, part) => RemoveMedia(part));
             OnLoaded<MediaPart>((context, part) => {
-                if (!String.IsNullOrEmpty(part.FileName)) {
+                if (!string.IsNullOrEmpty(part.FileName)) {
                     part._publicUrl.Loader(() => _mediaLibraryService.GetMediaPublicUrl(part.FolderPath, part.FileName));
+                } else {
+                    // Usually, OEmbedParts won't directly have a source file, but we may be interested
+                    // in easily accessing their source Url.
+                    var oePart = part.As<OEmbedPart>();
+                    if (oePart != null) {
+                        part._publicUrl.Loader(() => oePart.Source);
+                    }
                 }
             });
 
@@ -98,7 +123,13 @@ namespace Orchard.MediaLibrary.Handlers {
 
         protected void RemoveMedia(MediaPart part) {
             if (!string.IsNullOrEmpty(part.FileName)) {
-                _mediaLibraryService.DeleteFile(part.FolderPath, part.FileName);
+                var mediaItemsUsingTheFile = _contentManager.Query<MediaPart, MediaPartRecord>()
+                                                            .ForVersion(VersionOptions.Latest)
+                                                            .Where(x => x.FolderPath == part.FolderPath && x.FileName == part.FileName)
+                                                            .Count();
+                if (mediaItemsUsingTheFile == 1) { // if the file is referenced only by the deleted media content, the file too can be removed.
+                    _mediaLibraryService.DeleteFile(part.FolderPath, part.FileName);
+                }
             }
         }
 

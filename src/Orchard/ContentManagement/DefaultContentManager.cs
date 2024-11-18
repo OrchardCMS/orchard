@@ -33,7 +33,7 @@ namespace Orchard.ContentManagement {
         private readonly ICacheManager _cacheManager;
         private readonly Func<IContentManagerSession> _contentManagerSession;
         private readonly Lazy<IContentDisplay> _contentDisplay;
-        private readonly Lazy<ITransactionManager> _transactionManager; 
+        private readonly Lazy<ITransactionManager> _transactionManager;
         private readonly Lazy<IEnumerable<IContentHandler>> _handlers;
         private readonly Lazy<IEnumerable<IIdentityResolverSelector>> _identityResolverSelectors;
         private readonly Lazy<IEnumerable<ISqlStatementProvider>> _sqlStatementProviders;
@@ -78,7 +78,11 @@ namespace Orchard.ContentManagement {
         public ILogger Logger { get; set; }
 
         public IEnumerable<IContentHandler> Handlers {
-              get { return _handlers.Value; }
+            get { return _handlers.Value; }
+        }
+
+        public ITransactionManager TransactionManager {
+            get { return _transactionManager.Value; }
         }
 
         public IEnumerable<ContentTypeDefinition> GetContentTypeDefinitions() {
@@ -183,8 +187,8 @@ namespace Orchard.ContentManagement {
                             contentItemVersionCriteria.Add(Restrictions.Eq("Latest", true));
                         }
 
-                        contentItemVersionCriteria.SetFetchMode("ContentItemRecord", FetchMode.Eager);
-                        contentItemVersionCriteria.SetFetchMode("ContentItemRecord.ContentType", FetchMode.Eager);
+                        contentItemVersionCriteria.Fetch(SelectMode.Fetch, "ContentItemRecord");
+                        contentItemVersionCriteria.Fetch(SelectMode.Fetch, "ContentItemRecord.ContentType");
                         //contentItemVersionCriteria.SetMaxResults(1);
                     });
 
@@ -282,6 +286,11 @@ namespace Orchard.ContentManagement {
         }
 
         public IEnumerable<T> GetMany<T>(IEnumerable<int> ids, VersionOptions options, QueryHints hints) where T : class, IContent {
+            if (!ids.Any()) {
+                // since there are no ids, I have to get no item, so it makes
+                // sense to not do anything at all
+                return Enumerable.Empty<T>();
+            }
             var contentItemVersionRecords = GetManyImplementation(hints, (contentItemCriteria, contentItemVersionCriteria) => {
                 contentItemCriteria.Add(Restrictions.In("Id", ids.ToArray()));
                 if (options.IsPublished) {
@@ -314,6 +323,11 @@ namespace Orchard.ContentManagement {
 
 
         public IEnumerable<ContentItem> GetManyByVersionId(IEnumerable<int> versionRecordIds, QueryHints hints) {
+            if (!versionRecordIds.Any()) {
+                // since there are no ids, I have to get no item, so it makes
+                // sense to not do anything at all
+                return Enumerable.Empty<ContentItem>();
+            }
             var contentItemVersionRecords = GetManyImplementation(hints, (contentItemCriteria, contentItemVersionCriteria) =>
                 contentItemVersionCriteria.Add(Restrictions.In("Id", versionRecordIds.ToArray())));
 
@@ -351,13 +365,13 @@ namespace Orchard.ContentManagement {
 
                 // locate hints that match properties in the ContentItemVersionRecord
                 foreach (var hit in contentItemVersionMetadata.PropertyNames.Where(hintDictionary.ContainsKey).SelectMany(key => hintDictionary[key])) {
-                    contentItemVersionCriteria.SetFetchMode(hit.Hint, FetchMode.Eager);
+                    contentItemVersionCriteria.Fetch(SelectMode.Fetch, hit.Hint);
                     hit.Segments.Take(hit.Segments.Count() - 1).Aggregate(contentItemVersionCriteria, ExtendCriteria);
                 }
 
                 // locate hints that match properties in the ContentItemRecord
                 foreach (var hit in contentItemMetadata.PropertyNames.Where(hintDictionary.ContainsKey).SelectMany(key => hintDictionary[key])) {
-                    contentItemVersionCriteria.SetFetchMode("ContentItemRecord." + hit.Hint, FetchMode.Eager);
+                    contentItemVersionCriteria.Fetch(SelectMode.Fetch, "ContentItemRecord." + hit.Hint);
                     hit.Segments.Take(hit.Segments.Count() - 1).Aggregate(contentItemCriteria, ExtendCriteria);
                 }
 

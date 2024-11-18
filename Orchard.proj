@@ -13,9 +13,10 @@
     <SourceArtifactFolder>$(ArtifactsFolder)\Source</SourceArtifactFolder>
     <MsDeployArtifactFolder>$(ArtifactsFolder)\MsDeploy</MsDeployArtifactFolder>
     <GalleryArtifactFolder>$(ArtifactsFolder)\Gallery</GalleryArtifactFolder>
-    <ModulesSrcFolder>$(MSBuildProjectDirectory)\src\Orchard.Web\Modules</ModulesSrcFolder>
-    <OrchardCoreSrcFolder>$(MSBuildProjectDirectory)\src\Orchard.Web\Core</OrchardCoreSrcFolder>
-    <ThemesSrcFolder>$(MSBuildProjectDirectory)\src\Orchard.Web\Themes</ThemesSrcFolder>
+    <OrchardWebFolder>$(SrcFolder)\Orchard.Web</OrchardWebFolder>
+    <ModulesSrcFolder>$(OrchardWebFolder)\Modules</ModulesSrcFolder>
+    <OrchardCoreSrcFolder>$(OrchardWebFolder)\Core</OrchardCoreSrcFolder>
+    <ThemesSrcFolder>$(OrchardWebFolder)\Themes</ThemesSrcFolder>
 
     <CompileFolder>$(BuildFolder)\Compile</CompileFolder>
     <WebSitesFolder>$(CompileFolder)\_PublishedWebsites</WebSitesFolder>
@@ -112,15 +113,25 @@
   </Target>
   
   <Target Name="Compile">
+    <CallTarget Targets="DevCompile"/>
     <!-- Compile to "OutputFolder" -->
     <MSBuild
       Projects="$(Solution)"
       Targets="Build"
       Properties="Configuration=$(Configuration);OutputPath=$(CompileFolder)" />
+  </Target>
+  
+  <Target Name="DevCompile">
+    <!-- To make sure that Roslyn tools are available, since it's included with Orchard.Web, which is not referenced by
+    other projects, so it will be built towards the end. -->
+    <MSBuild
+      Projects="$(OrchardWebFolder)\Orchard.Web.csproj"
+      Targets="CopyRoslynCompilerFilesToOutputDirectory" />
     <!-- Compile to "regular" output folder for devs using VS locally -->
     <MSBuild
       Projects="$(Solution)"
-      Targets="Build"/>
+      Targets="Build"
+      Properties="Configuration=$(Configuration);MvcBuildViews=$(MvcBuildViews)" />
   </Target>
 
   <Target Name="CompileMsBuildTasks">
@@ -150,12 +161,13 @@
     <NUnit Assemblies="@(TestAssemblies)" ToolPath="@(NUnitPackageToolsFolder)" WorkingDirectory="$(CompileFolder)" OutputXmlFile="$(BuildFolder)\Orchard.Tests.xml" ExcludeCategory="longrunning" />
   </Target>
 
-  <Target Name="Spec" DependsOnTargets="Package-Stage">
-
-    <CreateItem Include="$(CompileFolder)\*.Specs.dll">
+  <Target Name="Spec" DependsOnTargets="Compile">
+    <!-- Running SpecFlow tests -->
+    <CreateItem Include="$(CompileFolder)\*.Specs.*dll">
       <Output TaskParameter="Include" ItemName="SpecAssemblies" />
     </CreateItem>
-    <NUnit Assemblies="@(SpecAssemblies)" ToolPath="$(NUnitPackageToolsFolder)" />
+    
+    <NUnit Assemblies="@(SpecAssemblies)" ToolPath="@(NUnitPackageToolsFolder)" WorkingDirectory="$(CompileFolder)" OutputXmlFile="$(BuildFolder)\Orchard.Specs.xml" />
   </Target>
 
   <!-- Packaging (Stage) -->
@@ -367,11 +379,6 @@
     </ItemGroup>
 
     <Copy SourceFiles="@(Profiling-Web)" DestinationFolder="$(ProfilingFolder)\%(RecursiveDir)"/>
-
-    <XmlUpdate XmlFileName="$(ProfilingFolder)\web.config"
-      XPath="/configuration/system.web/trust/@level"
-      Value="Full" />
-
   </Target>
 
   <Target Name="Profiling-Setup">
@@ -379,7 +386,7 @@
       <Output TaskParameter="Lines" ItemName="ProfilingSetupCommands"/>
     </ReadLinesFromFile>
 
-    <Exec Command="$(ProfilingFolder)\bin\Orchard.exe %(ProfilingSetupCommands.Identity)" WorkingDirectory="$(ProfilingFolder)"/>
+    <Exec Command="&quot;$(ProfilingFolder)\bin\Orchard.exe&quot; %(ProfilingSetupCommands.Identity)" WorkingDirectory="$(ProfilingFolder)"/>
   </Target>
 
   <!-- Gallery Packaging -->

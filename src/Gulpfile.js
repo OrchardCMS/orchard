@@ -97,7 +97,13 @@ function resolveAssetGroupPaths(assetGroup, assetManifestPath) {
     assetGroup.manifestPath = assetManifestPath;
     assetGroup.basePath = path.dirname(assetManifestPath);
     assetGroup.inputPaths = assetGroup.inputs.map(function (inputPath) {
-        return path.resolve(path.join(assetGroup.basePath, inputPath));
+        var excludeFile = false;
+        if (inputPath.startsWith('!')) {
+            inputPath = inputPath.slice(1);
+            excludeFile = true;
+        }
+        var newPath = path.resolve(path.join(assetGroup.basePath, inputPath));
+        return (excludeFile ? '!' : '') + newPath;
     });
     assetGroup.watchPaths = [];
     if (assetGroup.watch) {
@@ -216,7 +222,7 @@ function buildJsPipeline(assetGroup, doConcat, doRebuild) {
     // Source maps are useless if neither concatenating nor transpiling.
     if ((!doConcat || assetGroup.inputPaths.length < 2) && !assetGroup.inputPaths.some(function (inputPath) { return path.extname(inputPath).toLowerCase() === ".ts"; }))
         generateSourceMaps = false;
-    var typeScriptOptions = { allowJs: true, noImplicitAny: true, noEmitOnError: true };
+    var typeScriptOptions = { allowJs: true, noImplicitAny: true, noEmitOnError: true, module: 'amd' };
     if (assetGroup.typeScriptOptions)
         typeScriptOptions = Object.assign(typeScriptOptions, assetGroup.typeScriptOptions); // Merge override options from asset group if any.
     if (doConcat)
