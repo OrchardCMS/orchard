@@ -119,6 +119,7 @@
     <Compile Include="Common\ViewModels\DateTimeEditor.cs" />
     <Compile Include="Common\ViewModels\TextFieldDriverViewModel.cs" />
     <Compile Include="Common\ViewModels\TextFieldSettingsEventsViewModel.cs" />
+    <Compile Include="Containers\AdminMenu.cs" />
     <Compile Include="Containers\Controllers\ItemController.cs" />
     <Compile Include="Containers\Drivers\ContainablePartDriver.cs" />
     <Compile Include="Containers\Drivers\ContainerPartDriver.cs" />
