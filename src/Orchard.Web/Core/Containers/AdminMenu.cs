@@ -72,13 +72,10 @@ namespace Orchard.Core.Containers {
                         }
                     }
 
-                    var containerMetadata = _contentManager.GetItemMetadata(actualContainer);
-                    item.Action(containerMetadata.AdminRouteValues);
-
-                    item.Action(containerMetadata.AdminRouteValues);
-                    item.AddClass("section-container");
-                    item.AddClass(closureContainer.AdminMenuText.HtmlClassify());
-                    item.LinkToFirstChild(false);
+                    item.Action(_contentManager.GetItemMetadata(actualContainer).AdminRouteValues)
+                        .AddClass("section-container")
+                        .AddClass(closureContainer.AdminMenuText.HtmlClassify())
+                        .LinkToFirstChild(false);
 
                     foreach (var itemContentType in closureContainer.ItemContentTypes) {
                         var closureItemContentType = itemContentType;
