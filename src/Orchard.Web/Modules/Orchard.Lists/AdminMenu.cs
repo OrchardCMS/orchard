@@ -8,7 +8,7 @@ namespace Orchard.Lists {
 
         public void GetNavigation(NavigationBuilder builder) =>
             builder
-                .AddImageSet("container")
+                .AddImageSet("lists")
                 .Add(T("Lists"), "11", item => item
                 .Action("Index", "Admin", new { area = "Orchard.Lists" }).Permission(Permissions.ManageLists));
     }

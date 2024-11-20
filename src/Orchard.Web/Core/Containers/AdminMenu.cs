@@ -76,7 +76,7 @@ namespace Orchard.Core.Containers {
                     item.Action(containerMetadata.AdminRouteValues);
 
                     item.Action(containerMetadata.AdminRouteValues);
-                    item.AddClass("nav-list");
+                    item.AddClass("section-container");
                     item.AddClass(closureContainer.AdminMenuText.HtmlClassify());
                     item.LinkToFirstChild(false);
 
