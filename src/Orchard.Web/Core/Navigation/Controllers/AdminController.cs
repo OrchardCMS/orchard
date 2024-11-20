@@ -301,13 +301,15 @@ namespace Orchard.Core.Navigation.Controllers {
         }
 
         private ActionResult EditPOST(int id, string returnUrl, Action<ContentItem> conditionallyPublish) {
-            var contentItem = _contentManager.Get(id, VersionOptions.DraftRequired);
+            var menuPart = _contentManager.GetDraftRequired<MenuPart>(id);
 
-            if (contentItem == null)
+            if (menuPart == null)
                 return HttpNotFound();
 
-            if (!_authorizer.Authorize(Permissions.ManageMenus, contentItem.Content.MenuPart.Menu, T("Couldn't manage the menu")))
+            if (!_authorizer.Authorize(Permissions.ManageMenus, menuPart.Menu, T("Couldn't manage the menu")))
                 return new HttpUnauthorizedResult();
+
+            var contentItem = menuPart.ContentItem;
 
             string previousRoute = null;
             if (contentItem.Has<IAliasAspect>()
@@ -333,11 +335,14 @@ namespace Orchard.Core.Navigation.Controllers {
                 returnUrl = Url.ItemDisplayUrl(contentItem);
             }
 
-            _notifier.Information(string.IsNullOrWhiteSpace(contentItem.TypeDefinition.DisplayName)
-                ? T("Your content has been saved.")
-                : T("Your {0} has been saved.", contentItem.TypeDefinition.DisplayName));
+            _notifier.Information(
+                string.IsNullOrWhiteSpace(menuPart.MenuText)
+                    ? string.IsNullOrWhiteSpace(contentItem.TypeDefinition.DisplayName)
+                        ? T("Your content has been saved.")
+                        : T("Your {0} has been saved.", contentItem.TypeDefinition.DisplayName)
+                    : T("'{0}' has been saved.", menuPart.MenuText));
 
-            return this.RedirectLocal(returnUrl, () => RedirectToAction("Edit", new RouteValueDictionary { { "Id", contentItem.Id } }));
+            return RedirectToAction("Index", new { menuId = menuPart.Menu.Id });
         }
 
         bool IUpdateModel.TryUpdateModel<TModel>(TModel model, string prefix, string[] includeProperties, string[] excludeProperties) {
