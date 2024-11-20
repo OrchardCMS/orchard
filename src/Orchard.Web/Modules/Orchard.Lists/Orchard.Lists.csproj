@@ -148,11 +148,9 @@
     <Content Include="Styles\images\offline.gif" />
     <Content Include="Styles\images\online.gif" />
     <Content Include="Styles\list-admin.css" />
-    <Content Include="Styles\images\menu.list.png" />
     <Content Include="Styles\list-admin.min.css">
       <DependentUpon>list-admin.css</DependentUpon>
     </Content>
-    <Content Include="Styles\menu.list-admin.css" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Web.config">

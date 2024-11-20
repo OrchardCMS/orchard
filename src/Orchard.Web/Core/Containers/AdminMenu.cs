@@ -29,7 +29,7 @@ namespace Orchard.Core.Containers {
         public string MenuName { get { return "admin"; } }
 
         public void GetNavigation(NavigationBuilder builder) {
-            builder.AddImageSet("list");
+            builder.AddImageSet("container");
 
             var containers = _containerService
                 .GetContainersQuery(VersionOptions.Latest)
