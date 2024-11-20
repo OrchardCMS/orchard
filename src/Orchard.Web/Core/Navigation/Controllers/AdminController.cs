@@ -262,9 +262,12 @@ namespace Orchard.Core.Navigation.Controllers {
 
             _contentManager.Publish(menuPart.ContentItem);
 
-            _notifier.Information(string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
-                ? T("Your content has been published.")
-                : T("Your {0} has been published.", menuPart.TypeDefinition.DisplayName));
+            _notifier.Information(
+                string.IsNullOrWhiteSpace(menuPart.MenuText)
+                    ? string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
+                        ? T("Your content has been published.")
+                        : T("Your {0} has been published.", menuPart.TypeDefinition.DisplayName)
+                    : T("'{0}' has been published.", menuPart.MenuText));
 
             return RedirectToAction("Index", new { menuId = menuPart.Menu.Id });
         }
@@ -281,9 +284,12 @@ namespace Orchard.Core.Navigation.Controllers {
 
             _contentManager.Unpublish(menuPart.ContentItem);
 
-            _notifier.Information(string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
-                ? T("Your content has been unpublished.")
-                : T("Your {0} has been unpublished.", menuPart.TypeDefinition.DisplayName));
+            _notifier.Information(
+                string.IsNullOrWhiteSpace(menuPart.MenuText)
+                    ? string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
+                        ? T("Your content has been unpublished.")
+                        : T("Your {0} has been unpublished.", menuPart.TypeDefinition.DisplayName)
+                    : T("'{0}' has been unpublished.", menuPart.MenuText));
 
             return RedirectToAction("Index", new { menuId = menuPart.Menu.Id });
         }
