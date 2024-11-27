@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
@@ -47,20 +48,35 @@ namespace Orchard.MediaProcessing.Filters {
         }
 
         public string ProcessContent(string text, HtmlFilterContext context) {
-            if (!string.IsNullOrEmpty(text) && context.Flavor == "html") {
-                var imgTagPattern = @"<img\b[^>]*>";
-                var matches = Regex.Matches(text, imgTagPattern);
-
-                foreach (Match match in matches) {
-                    var imgTag = match.Value;
-                    var processedImgTag = ProcessImageContent(imgTag);
-                    if (Settings.PopulateAlt) {
-                        processedImgTag = ProcessImageAltContent(processedImgTag);
-                    }
-                    text = text.Replace(imgTag, processedImgTag);
-                }
+            if (string.IsNullOrWhiteSpace(text) || context.Flavor != "html") {
+                return text;
             }
-            return text;
+
+            var matches = Regex.Matches(text, @"<img\b[^>]*>");
+
+            if (matches.Count == 0) {
+                return text;
+            }
+
+            var offset = 0; // This tracks where last image tag ended in the original HTML.
+            var newText = new StringBuilder();
+
+            foreach (Match match in matches) {
+                newText.Append(text.Substring(offset, match.Index - offset));
+                offset = match.Index + match.Length;
+                var imgTag = match.Value;
+                var processedImgTag = ProcessImageContent(imgTag);
+
+                if (Settings.PopulateAlt) {
+                    processedImgTag = ProcessImageAltContent(processedImgTag);
+                }
+
+                newText.Append(processedImgTag);
+            }
+
+            newText.Append(text.Substring(offset));
+
+            return newText.ToString();
         }
 
         private string ProcessImageContent(string imgTag) {
