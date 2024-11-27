@@ -24,7 +24,8 @@ namespace Orchard.MediaProcessing.Filters {
         private static readonly Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
             { ".jpeg", "jpg" }, // For example: .jpeg supports compression (quality), format to 'jpg'.
             { ".jpg", "jpg"  },
-            { ".png", null }};
+            { ".png", null }
+        };
 
         public MediaProcessingHtmlFilter(IWorkContextAccessor wca, IImageProfileManager profileManager) {
             _profileManager = profileManager;
@@ -40,6 +41,7 @@ namespace Orchard.MediaProcessing.Filters {
                 if (_settingsPart == null) {
                     _settingsPart = _wca.GetContext().CurrentSite.As<MediaHtmlFilterSettingsPart>();
                 }
+
                 return _settingsPart;
             }
         }
@@ -85,6 +87,7 @@ namespace Orchard.MediaProcessing.Filters {
                     Logger.Error(ex, "Unable to process Html Dynamic image profile for '{0}'", src);
                 }
             }
+
             return imgTag;
         }
 
@@ -147,21 +150,25 @@ namespace Orchard.MediaProcessing.Filters {
                 var text = Path.GetFileNameWithoutExtension(src).Replace("-", " ").Replace("_", " ");
                 imgTag = SetAttributeValue(imgTag, "alt", text);
             }
+
             return imgTag;
         }
 
         private string GetAttributeValue(string tag, string attributeName) {
             var match = Regex.Match(tag, GetAttributeRegex(attributeName));
+
             return match.Success ? match.Groups[1].Value : null;
         }
 
         private int GetAttributeValueInt(string tag, string attributeName) {
             var value = GetAttributeValue(tag, attributeName);
+
             return int.TryParse(value, out int result) ? result : 0;
         }
 
         private string SetAttributeValue(string tag, string attributeName, string value) {
             var attributeRegex = GetAttributeRegex(attributeName);
+
             if (Regex.IsMatch(tag, attributeRegex)) {
                 return Regex.Replace(tag, attributeRegex, $"{attributeName}=\"{value}\"");
             }
