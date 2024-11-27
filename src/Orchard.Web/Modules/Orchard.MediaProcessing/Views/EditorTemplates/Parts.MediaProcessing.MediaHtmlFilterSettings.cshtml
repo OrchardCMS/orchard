@@ -4,12 +4,12 @@
     <legend>@T("Media Processing Filter")</legend>
     <div>
         @Html.LabelFor(m => m.DensityThreshold, T("Density Threshold"))
-        @Html.DropDownListFor(m => m.DensityThreshold, new List<SelectListItem>(new [] {
-                    new SelectListItem { Value = "1", Text = "@1x" },
-                    new SelectListItem { Value = "2", Text = "@2x" },
-                    new SelectListItem { Value = "3", Text = "@3x" },
-                    new SelectListItem { Value = "4", Text = "@4x" }}
-                ))
+        @Html.DropDownListFor(m => m.DensityThreshold, new List<SelectListItem>(new[] {
+            new SelectListItem { Value = "1", Text = "@1x" },
+            new SelectListItem { Value = "2", Text = "@2x" },
+            new SelectListItem { Value = "3", Text = "@3x" },
+            new SelectListItem { Value = "4", Text = "@4x" }
+        }))
         <span class="hint">@T("The image will only be reduced if at least this pixel density is maintained.")</span>
     </div>
     <div>
@@ -22,5 +22,4 @@
         @Html.LabelFor(m => m.PopulateAlt, T("Populate Empty Alt Tags").Text, new { @class = "forcheckbox" })
         <span class="hint">@T("Populate an Alt tag based on the file name if the Alt tag is empty")</span>
     </div>
-
 </fieldset>

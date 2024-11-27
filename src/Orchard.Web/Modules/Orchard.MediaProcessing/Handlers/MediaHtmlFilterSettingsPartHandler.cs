@@ -5,7 +5,6 @@ using Orchard.Localization;
 using Orchard.MediaProcessing.Models;
 
 namespace Orchard.MediaProcessing.Handlers {
-
     [OrchardFeature(Features.OrchardMediaProcessingHtmlFilter)]
     public class MediaHtmlFilterSettingsPartHandler : ContentHandler {
         public MediaHtmlFilterSettingsPartHandler() {
@@ -26,6 +25,5 @@ namespace Orchard.MediaProcessing.Handlers {
             base.GetItemMetadata(context);
             context.Metadata.EditorGroupInfo.Add(new GroupInfo(T("Media")));
         }
-
     }
 }
