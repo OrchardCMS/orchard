@@ -21,8 +21,8 @@ namespace Orchard.MediaProcessing.Filters {
         private readonly IImageProfileManager _profileManager;
 
         private MediaHtmlFilterSettingsPart _settingsPart;
-        private static Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
-            { ".jpeg", "jpg" }, //For example: .jpeg supports compression (quality), format to 'jpg'
+        private static readonly Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
+            { ".jpeg", "jpg" }, // For example: .jpeg supports compression (quality), format to 'jpg'.
             { ".jpg", "jpg"  },
             { ".png", null }};
 
@@ -76,6 +76,8 @@ namespace Orchard.MediaProcessing.Filters {
                 && !src.Contains("_Profiles")
                 && _validExtensions.ContainsKey(ext)) {
                 try {
+                    // If the image has a combination of width, height and valid extension, that is not already in
+                    // _Profiles, then process the image.
                     var newSrc = TryGetImageProfilePath(src, ext, width, height);
                     imgTag = SetAttributeValue(imgTag, "src", newSrc);
                 }
@@ -88,6 +90,7 @@ namespace Orchard.MediaProcessing.Filters {
 
         private string TryGetImageProfilePath(string src, string ext, int width, int height) {
             var filters = new List<FilterRecord> {
+                // Factor in a minimum width and height with respect to higher pixel density devices.
                 CreateResizeFilter(width * Settings.DensityThreshold, height * Settings.DensityThreshold)
             };
 
@@ -106,6 +109,8 @@ namespace Orchard.MediaProcessing.Filters {
         }
 
         private FilterRecord CreateResizeFilter(int width, int height) {
+            // Because the images can be resized in the HTML editor, we must assume that the image is of the exact desired
+            // dimensions and that stretch is an appropriate mode. Note that the default is to never upscale images.
             var state = new Dictionary<string, string> {
                 { "Width", width.ToString() },
                 { "Height", height.ToString() },
@@ -146,7 +151,7 @@ namespace Orchard.MediaProcessing.Filters {
         }
 
         private string GetAttributeValue(string tag, string attributeName) {
-            var match = Regex.Match(tag, $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?");
+            var match = Regex.Match(tag, GetAttributeRegex(attributeName));
             return match.Success ? match.Groups[1].Value : null;
         }
 
@@ -156,12 +161,15 @@ namespace Orchard.MediaProcessing.Filters {
         }
 
         private string SetAttributeValue(string tag, string attributeName, string value) {
-            if (Regex.IsMatch(tag, $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?")) {
-                return Regex.Replace(tag, $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?", $"{attributeName}=\"{value}\"");
+            var attributeRegex = GetAttributeRegex(attributeName);
+            if (Regex.IsMatch(tag, attributeRegex)) {
+                return Regex.Replace(tag, attributeRegex, $"{attributeName}=\"{value}\"");
             }
             else {
                 return tag.Insert(tag.Length - 1, $" {attributeName}=\"{value}\"");
             }
         }
+
+        private string GetAttributeRegex(string attributeName) => $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?";
     }
 }
