@@ -193,6 +193,6 @@ namespace Orchard.MediaProcessing.Filters {
             }
         }
 
-        private string GetAttributeRegex(string attributeName) => $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?";
+        private string GetAttributeRegex(string attributeName) => $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]*)[""']?";
     }
 }
