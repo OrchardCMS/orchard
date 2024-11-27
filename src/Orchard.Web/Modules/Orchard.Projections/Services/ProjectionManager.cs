@@ -140,6 +140,11 @@ namespace Orchard.Projections.Services {
 
             var contentItems = new List<ContentItem>();
 
+            // If there are no filters, return the empty list of content items instead of returning all content items.
+            if (queryRecord.FilterGroups.SelectMany(group => group.Filters).Count() == 0) {
+                return contentItems;
+            }
+
             // prepares tokens 
             Dictionary<string, object> tokens = new Dictionary<string, object>();
             if (part != null) {
