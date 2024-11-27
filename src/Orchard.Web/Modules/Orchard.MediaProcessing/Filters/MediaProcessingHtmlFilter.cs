@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using HtmlAgilityPack;
+using System.Text.RegularExpressions;
 using Orchard.ContentManagement;
 using Orchard.Environment.Extensions;
 using Orchard.Forms.Services;
@@ -22,8 +21,8 @@ namespace Orchard.MediaProcessing.Filters {
         private readonly IImageProfileManager _profileManager;
 
         private MediaHtmlFilterSettingsPart _settingsPart;
-        private Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
-            { ".jpeg", "jpg" }, //For example: .jpeg supports commpression (quality), format to 'jpg'
+        private static Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
+            { ".jpeg", "jpg" }, //For example: .jpeg supports compression (quality), format to 'jpg'
             { ".jpg", "jpg"  },
             { ".png", null }};
 
@@ -47,55 +46,51 @@ namespace Orchard.MediaProcessing.Filters {
 
         public string ProcessContent(string text, HtmlFilterContext context) {
             if (!string.IsNullOrEmpty(text) && context.Flavor == "html") {
-                var doc = new HtmlDocument();
-                doc.LoadHtml(text);
+                var imgTagPattern = @"<img\b[^>]*>";
+                var matches = Regex.Matches(text, imgTagPattern);
 
-                foreach (var node in doc.DocumentNode.DescendantsAndSelf("img")) {
-                    ProcessImageContent(node);
+                foreach (Match match in matches) {
+                    var imgTag = match.Value;
+                    var processedImgTag = ProcessImageContent(imgTag);
                     if (Settings.PopulateAlt) {
-                        ProcessImageAltContent(node);
+                        processedImgTag = ProcessImageAltContent(processedImgTag);
                     }
+                    text = text.Replace(imgTag, processedImgTag);
                 }
-
-                return doc.DocumentNode.OuterHtml;
             }
-            else {
-                return text;
-            }
+            return text;
         }
 
-        private void ProcessImageContent(HtmlNode node) {
-            // If the noresize attribute is present, do nothing.
-            if (node.Attributes.AttributesWithName("noresize").Any()) {
-                return;
+        private string ProcessImageContent(string imgTag) {
+            if (imgTag.Contains("noresize")) {
+                return imgTag;
             }
 
-            var src = GetAttributeValue(node, "src");
+            var src = GetAttributeValue(imgTag, "src");
             var ext = string.IsNullOrEmpty(src) ? null : Path.GetExtension(src);
-            var width = GetAttributeValueInt(node, "width");
-            var height = GetAttributeValueInt(node, "height");
+            var width = GetAttributeValueInt(imgTag, "width");
+            var height = GetAttributeValueInt(imgTag, "height");
 
             if (width > 0 && height > 0
                 && !string.IsNullOrEmpty(src)
                 && !src.Contains("_Profiles")
                 && _validExtensions.ContainsKey(ext)) {
                 try {
-                    // If img has a width, height, not already in _Profiles and a valid ext, process the image.
-                    node.Attributes["src"].Value = TryGetImageProfilePath(src, ext, width, height);
+                    var newSrc = TryGetImageProfilePath(src, ext, width, height);
+                    imgTag = SetAttributeValue(imgTag, "src", newSrc);
                 }
                 catch (Exception ex) {
                     Logger.Error(ex, "Unable to process Html Dynamic image profile for '{0}'", src);
                 }
             }
+            return imgTag;
         }
 
         private string TryGetImageProfilePath(string src, string ext, int width, int height) {
             var filters = new List<FilterRecord> {
-                // Factor in a min height and width with respect to higher pixel density devices.
                 CreateResizeFilter(width * Settings.DensityThreshold, height * Settings.DensityThreshold)
             };
 
-            // If the ext supports compression, also set the quality.
             if (_validExtensions[ext] != null && Settings.Quality < 100) {
                 filters.Add(CreateFormatFilter(Settings.Quality, _validExtensions[ext]));
             }
@@ -111,9 +106,6 @@ namespace Orchard.MediaProcessing.Filters {
         }
 
         private FilterRecord CreateResizeFilter(int width, int height) {
-            // Because the images can be resized in the html editor, we must assume that the image
-            // is of the exact desired dimensions and that stretch is an appropriate mode.
-            // Note that the default is to never upscale images.
             var state = new Dictionary<string, string> {
                 { "Width", width.ToString() },
                 { "Height", height.ToString() },
@@ -142,29 +134,34 @@ namespace Orchard.MediaProcessing.Filters {
             };
         }
 
-        private void ProcessImageAltContent(HtmlNode node) {
-            var src = GetAttributeValue(node, "src");
-            var alt = GetAttributeValue(node, "alt");
+        private string ProcessImageAltContent(string imgTag) {
+            var src = GetAttributeValue(imgTag, "src");
+            var alt = GetAttributeValue(imgTag, "alt");
 
             if (string.IsNullOrEmpty(alt) && !string.IsNullOrEmpty(src)) {
                 var text = Path.GetFileNameWithoutExtension(src).Replace("-", " ").Replace("_", " ");
-                SetAttributeValue(node, "alt", text);
+                imgTag = SetAttributeValue(imgTag, "alt", text);
             }
+            return imgTag;
         }
 
-        private string GetAttributeValue(HtmlNode node, string name) => node.Attributes[name]?.Value;
+        private string GetAttributeValue(string tag, string attributeName) {
+            var match = Regex.Match(tag, $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?");
+            return match.Success ? match.Groups[1].Value : null;
+        }
 
-        private int GetAttributeValueInt(HtmlNode node, string name) =>
-            node.Attributes[name] == null ? 0 : int.TryParse(node.Attributes[name].Value, out int val) ? val : 0;
+        private int GetAttributeValueInt(string tag, string attributeName) {
+            var value = GetAttributeValue(tag, attributeName);
+            return int.TryParse(value, out int result) ? result : 0;
+        }
 
-        private void SetAttributeValue(HtmlNode node, string name, string value) {
-            if (node.Attributes.Contains(name)) {
-                node.Attributes[name].Value = value;
+        private string SetAttributeValue(string tag, string attributeName, string value) {
+            if (Regex.IsMatch(tag, $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?")) {
+                return Regex.Replace(tag, $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]+)[""']?", $"{attributeName}=\"{value}\"");
             }
             else {
-                node.Attributes.Add(name, value);
+                return tag.Insert(tag.Length - 1, $" {attributeName}=\"{value}\"");
             }
         }
-
     }
 }
