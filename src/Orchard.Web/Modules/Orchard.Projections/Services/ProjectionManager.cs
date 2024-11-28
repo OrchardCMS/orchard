@@ -140,11 +140,6 @@ namespace Orchard.Projections.Services {
 
             var contentItems = new List<ContentItem>();
 
-            // If there are no filters, return the empty list of content items instead of returning all content items.
-            if (queryRecord.FilterGroups.SelectMany(group => group.Filters).Count() == 0) {
-                return contentItems;
-            }
-
             // prepares tokens 
             Dictionary<string, object> tokens = new Dictionary<string, object>();
             if (part != null) {
@@ -209,8 +204,8 @@ namespace Orchard.Projections.Services {
 
             var version = queryRecord.VersionScope.ToVersionOptions();
 
-            // pre-executing all groups
-            foreach (var group in queryRecord.FilterGroups) {
+            // Iterate over each filter group, but ignore empty ones, because they'd cause all content items to be returned.
+            foreach (var group in queryRecord.FilterGroups.Where(group => group.Filters.Count > 0)) {
                 var contentQuery = _contentManager.HqlQuery().ForVersion(version);
 
                 // iterate over each filter to apply the alterations to the query object
