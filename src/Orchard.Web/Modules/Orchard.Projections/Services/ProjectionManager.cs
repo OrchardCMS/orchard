@@ -114,13 +114,13 @@ namespace Orchard.Projections.Services {
                 throw new ArgumentException("queryId");
             }
 
-            // prepares tokens 
+            // Prepare tokens.
             Dictionary<string, object> tokens = new Dictionary<string, object>();
             if (part != null) {
                 tokens.Add("Content", part.ContentItem);
             }
 
-            // aggregate the result for each group query
+            // Aggregate the result of each filter group.
             return GetContentQueries(queryRecord, Enumerable.Empty<SortCriterionRecord>(), tokens)
                 .Sum(contentQuery => contentQuery.Count());
         }
@@ -140,13 +140,13 @@ namespace Orchard.Projections.Services {
 
             var contentItems = new List<ContentItem>();
 
-            // prepares tokens 
+            // Prepare tokens.
             Dictionary<string, object> tokens = new Dictionary<string, object>();
             if (part != null) {
                 tokens.Add("Content", part.ContentItem);
             }
 
-            // aggregate the result for each group query
+            // Aggregate the result of each filter group.
             foreach (var contentQuery in GetContentQueries(queryRecord, queryRecord.SortCriteria.OrderBy(sc => sc.Position), tokens)) {
                 contentItems.AddRange(contentQuery.Slice(skip, count));
             }
@@ -155,7 +155,7 @@ namespace Orchard.Projections.Services {
                 return contentItems;
             }
 
-            // re-executing the sorting with the cumulated groups
+            // Re-executing the sorting on the aggregated results.
             var ids = contentItems.Select(c => c.Id).ToArray();
 
             if (ids.Length == 0) {
@@ -164,7 +164,7 @@ namespace Orchard.Projections.Services {
 
             var groupQuery = _contentManager.HqlQuery().Where(alias => alias.Named("ci"), x => x.InG("Id", ids));
 
-            // iterate over each sort criteria to apply the alterations to the query object
+            // Iterate over each sort criteria to apply the alterations to the query object.
             foreach (var sortCriterion in queryRecord.SortCriteria.OrderBy(s => s.Position)) {
                 var tokenizedState = _tokenizer.Replace(sortCriterion.State, tokens);
                 var sortCriterionContext = new SortCriterionContext {
@@ -177,15 +177,17 @@ namespace Orchard.Projections.Services {
                 string category = sortCriterion.Category;
                 string type = sortCriterion.Type;
 
-                // look for the specific filter component
-                var descriptor = availableSortCriteria.SelectMany(x => x.Descriptors).FirstOrDefault(x => x.Category == category && x.Type == type);
+                // Find specific sort criterion.
+                var descriptor = availableSortCriteria
+                    .SelectMany(x => x.Descriptors)
+                    .FirstOrDefault(x => x.Category == category && x.Type == type);
 
-                // ignore unfound descriptors
+                // Skip if not found.
                 if (descriptor == null) {
                     continue;
                 }
 
-                // apply alteration
+                // Apply alteration.
                 descriptor.Sort(sortCriterionContext);
 
                 groupQuery = sortCriterionContext.Query;
@@ -194,7 +196,10 @@ namespace Orchard.Projections.Services {
             return groupQuery.Slice(skip, count);
         }
 
-        public IEnumerable<IHqlQuery> GetContentQueries(QueryPartRecord queryRecord, IEnumerable<SortCriterionRecord> sortCriteria, Dictionary<string, object> tokens) {
+        public IEnumerable<IHqlQuery> GetContentQueries(
+            QueryPartRecord queryRecord,
+            IEnumerable<SortCriterionRecord> sortCriteria,
+            Dictionary<string, object> tokens) {
 
             var availableFilters = DescribeFilters().ToList();
             var availableSortCriteria = DescribeSortCriteria().ToList();
@@ -208,7 +213,7 @@ namespace Orchard.Projections.Services {
             foreach (var group in queryRecord.FilterGroups.Where(group => group.Filters.Count > 0)) {
                 var contentQuery = _contentManager.HqlQuery().ForVersion(version);
 
-                // iterate over each filter to apply the alterations to the query object
+                // Iterate over each filter to apply the alterations to the query object.
                 foreach (var filter in group.Filters) {
                     var tokenizedState = _tokenizer.Replace(filter.State, tokens);
                     var filterContext = new FilterContext {
@@ -221,23 +226,23 @@ namespace Orchard.Projections.Services {
                     string category = filter.Category;
                     string type = filter.Type;
 
-                    // look for the specific filter component
+                    // Find specific filter.
                     var descriptor = availableFilters
                         .SelectMany(x => x.Descriptors)
                         .FirstOrDefault(x => x.Category == category && x.Type == type);
 
-                    // ignore unfound descriptors
+                    // Skip if not found.
                     if (descriptor == null) {
                         continue;
                     }
 
-                    // apply alteration
+                    // Apply alteration.
                     descriptor.Filter(filterContext);
 
                     contentQuery = filterContext.Query;
                 }
 
-                // iterate over each sort criteria to apply the alterations to the query object
+                // Iterate over each sort criteria to apply the alterations to the query object.
                 foreach (var sortCriterion in sortCriteria.OrderBy(s => s.Position)) {
                     var tokenizedState = _tokenizer.Replace(sortCriterion.State, tokens);
                     var sortCriterionContext = new SortCriterionContext {
@@ -250,22 +255,21 @@ namespace Orchard.Projections.Services {
                     string category = sortCriterion.Category;
                     string type = sortCriterion.Type;
 
-                    // look for the specific filter component
+                    // Find specific sort criterion.
                     var descriptor = availableSortCriteria
                         .SelectMany(x => x.Descriptors)
                         .FirstOrDefault(x => x.Category == category && x.Type == type);
 
-                    // ignore unfound descriptors
+                    // Skip if not found.
                     if (descriptor == null) {
                         continue;
                     }
 
-                    // apply alteration
+                    // Apply alteration.
                     descriptor.Sort(sortCriterionContext);
 
                     contentQuery = sortCriterionContext.Query;
                 }
-
 
                 yield return contentQuery;
             }
