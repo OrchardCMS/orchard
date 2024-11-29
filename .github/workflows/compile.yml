@@ -51,7 +51,7 @@ jobs:
           & "src/Orchard.Web/bin/Orchard.exe" @$commandFile
 
       - name: Compile with generated projects
-        run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:TreatWarningsAsErrors=true -WarnAsError
+        run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:TreatWarningsAsErrors=true -WarnAsError /NoWarn:CS2008
 
   compile-node:
     name: Compile client-side assets
