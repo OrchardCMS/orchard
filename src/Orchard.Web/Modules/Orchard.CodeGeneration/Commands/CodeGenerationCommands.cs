@@ -161,6 +161,8 @@ namespace Orchard.CodeGeneration.Commands {
             templateText = templateText.Replace("$$ModuleTypeLibGuid$$", Guid.NewGuid().ToString());
             File.WriteAllText(propertiesPath + "\\AssemblyInfo.cs", templateText);
             content.Add(propertiesPath + "\\AssemblyInfo.cs");
+            File.WriteAllText(testsPath + "packages.config", File.ReadAllText(_codeGenTemplatePath + "ModuleTestsPackagesConfig.txt"));
+            content.Add(testsPath + "packages.config");
 
             var itemGroup = CreateProjectItemGroup(testsPath, content, folders);
 
