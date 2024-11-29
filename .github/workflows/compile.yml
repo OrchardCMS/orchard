@@ -32,15 +32,17 @@ jobs:
         run: msbuild Orchard.proj /m /v:minimal /t:Test
 
       - name: Run Orchard setup
+        working-directory: ./src/Orchard.Web/bin
         run: |
-          $commandFile = "src/Orchard.Web/bin/setup-commands.txt"
+          $commandFile = 'setup-commands.txt'
           New-Item -Path $commandFile -ItemType File -Force
           Set-Content -Path $commandFile -Value 'setup /SiteName:Orchard /AdminUsername:admin /AdminPassword:Password1! /DatabaseProvider:SqlCe /Recipe:Default'
-          & "src/Orchard.Web/bin/Orchard.exe" @$commandFile
+          & Orchard.exe @$commandFile
 
       - name: Run code generation
+        working-directory: ./src/Orchard.Web/bin
         run: |
-          $commandFile = "src/Orchard.Web/bin/codegen-commands.txt"
+          $commandFile = 'codegen-commands.txt'
           New-Item -Path $commandFile -ItemType File -Force
           Set-Content -Path $commandFile -Value @'
             feature enable Orchard.CodeGeneration
@@ -48,7 +50,7 @@ jobs:
             codegen theme Orchard.CodeGeneration.TestTheme /CreateProject:true
             codegen moduletests Orchard.CodeGeneration.TestModule
           '@
-          & "src/Orchard.Web/bin/Orchard.exe" @$commandFile
+          & Orchard.exe @$commandFile
 
       - name: Compile with generated projects
         run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:TreatWarningsAsErrors=true -WarnAsError /NoWarn:CS2008
