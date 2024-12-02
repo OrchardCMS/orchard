@@ -85,7 +85,7 @@ namespace Orchard.MediaProcessing.Filters {
             }
 
             var src = GetAttributeValue(imgTag, "src");
-            var ext = string.IsNullOrEmpty(src) ? null : Path.GetExtension(src);
+            var ext = string.IsNullOrEmpty(src) ? null : Path.GetExtension(src).ToLowerInvariant();
             var width = GetAttributeValueInt(imgTag, "width");
             var height = GetAttributeValueInt(imgTag, "height");
 
