@@ -22,6 +22,7 @@ namespace Orchard.MediaProcessing.Filters {
         private readonly IImageProfileManager _profileManager;
 
         private MediaHtmlFilterSettingsPart _settingsPart;
+        private static readonly Regex _imageTagRegex = new Regex(@"<img\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
             { ".jpeg", "jpg" }, // For example: .jpeg supports compression (quality), format to 'jpg'.
             { ".jpg", "jpg"  },
@@ -52,7 +53,7 @@ namespace Orchard.MediaProcessing.Filters {
                 return text;
             }
 
-            var matches = Regex.Matches(text, @"<img\b[^>]*>");
+            var matches = _imageTagRegex.Matches(text);
 
             if (matches.Count == 0) {
                 return text;
