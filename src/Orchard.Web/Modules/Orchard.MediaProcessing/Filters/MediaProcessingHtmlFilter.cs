@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -23,6 +24,7 @@ namespace Orchard.MediaProcessing.Filters {
 
         private MediaHtmlFilterSettingsPart _settingsPart;
         private static readonly Regex _imageTagRegex = new Regex(@"<img\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly ConcurrentDictionary<string, Regex> _attributeRegexes = new ConcurrentDictionary<string, Regex>();
         private static readonly Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
             { ".jpeg", "jpg" }, // For example: .jpeg supports compression (quality), format to 'jpg'.
             { ".jpg", "jpg"  },
@@ -172,28 +174,29 @@ namespace Orchard.MediaProcessing.Filters {
         }
 
         private string GetAttributeValue(string tag, string attributeName) {
-            var match = Regex.Match(tag, GetAttributeRegex(attributeName));
+            var match = GetAttributeRegex(attributeName).Match(tag);
 
             return match.Success ? match.Groups[1].Value : null;
         }
 
-        private int GetAttributeValueInt(string tag, string attributeName) {
-            var value = GetAttributeValue(tag, attributeName);
-
-            return int.TryParse(value, out int result) ? result : 0;
-        }
+        private int GetAttributeValueInt(string tag, string attributeName) =>
+            int.TryParse(GetAttributeValue(tag, attributeName), out int result) ? result : 0;
 
         private string SetAttributeValue(string tag, string attributeName, string value) {
             var attributeRegex = GetAttributeRegex(attributeName);
+            var newAttribute = $"{attributeName}=\"{value}\"";
 
-            if (Regex.IsMatch(tag, attributeRegex)) {
-                return Regex.Replace(tag, attributeRegex, $"{attributeName}=\"{value}\"");
+            if (attributeRegex.IsMatch(tag)) {
+                return attributeRegex.Replace(tag, newAttribute);
             }
             else {
-                return tag.Insert(tag.Length - 1, $" {attributeName}=\"{value}\"");
+                return tag.Insert(tag.Length - 1, $" {newAttribute}");
             }
         }
 
-        private string GetAttributeRegex(string attributeName) => $@"\b{attributeName}\s*=\s*[""']?([^""'\s>]*)[""']?";
+        private Regex GetAttributeRegex(string attributeName) =>
+            _attributeRegexes.GetOrAdd(
+                attributeName,
+                name => new Regex($@"\b{name}\s*=\s*[""']?([^""'\s>]*)[""']?", RegexOptions.IgnoreCase | RegexOptions.Compiled));
     }
 }
