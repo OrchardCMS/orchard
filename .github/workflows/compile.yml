@@ -26,10 +26,32 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Compile
-        run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:MvcBuildViews=true /p:TreatWarningsAsErrors=true -WarnAsError
+        run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:TreatWarningsAsErrors=true -WarnAsError /p:MvcBuildViews=true
 
       - name: Test
         run: msbuild Orchard.proj /m /v:minimal /t:Test
+
+      - name: Run Orchard setup
+        run: |
+          $commandFile = 'src/Orchard.Web/bin/setup-commands.txt'
+          New-Item -Path $commandFile -ItemType File -Force
+          Set-Content -Path $commandFile -Value 'setup /SiteName:Orchard /AdminUsername:admin /AdminPassword:Password1! /DatabaseProvider:SqlCe /Recipe:Default'
+          & 'src/Orchard.Web/bin/Orchard.exe' @$commandFile
+
+      - name: Run code generation
+        run: |
+          $commandFile = 'src/Orchard.Web/bin/codegen-commands.txt'
+          New-Item -Path $commandFile -ItemType File -Force
+          Set-Content -Path $commandFile -Value @'
+            feature enable Orchard.CodeGeneration
+            codegen module Orchard.CodeGeneration.TestModule
+            codegen theme Orchard.CodeGeneration.TestTheme /CreateProject:true
+            codegen moduletests Orchard.CodeGeneration.TestModule
+          '@
+          & 'src/Orchard.Web/bin/Orchard.exe' @$commandFile
+
+      - name: Compile with generated projects
+        run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:TreatWarningsAsErrors=true -WarnAsError /NoWarn:CS2008
 
   compile-node:
     name: Compile client-side assets
