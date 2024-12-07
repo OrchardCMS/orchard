@@ -108,11 +108,7 @@ namespace Orchard.Projections.Services {
         }
 
         public int GetCount(int queryId, ContentPart part) {
-            var queryRecord = _queryRepository.Get(queryId);
-
-            if (queryRecord == null) {
-                throw new ArgumentException("queryId");
-            }
+            var queryRecord = _queryRepository.Get(queryId) ?? throw new ArgumentException("queryId");
 
             // Prepare tokens.
             Dictionary<string, object> tokens = new Dictionary<string, object>();
