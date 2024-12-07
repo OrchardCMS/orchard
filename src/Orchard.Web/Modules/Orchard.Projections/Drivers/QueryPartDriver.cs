@@ -19,14 +19,16 @@ namespace Orchard.Projections.Drivers {
             _projectionManager = projectionManager;
             _formManager = formManager;
         }
+
         protected override string Prefix {
             get {
                 return "Query_Part";
             }
         }
-        protected override DriverResult Editor(QueryPart part, dynamic shapeHelper) {
-            return Editor(part, null, shapeHelper);
-        }
+
+        protected override DriverResult Editor(QueryPart part, dynamic shapeHelper) =>
+            Editor(part, null, shapeHelper);
+
         protected override DriverResult Editor(QueryPart part, IUpdateModel updater, dynamic shapeHelper) {
             var model = new QueryViewModel { VersionScope = part.VersionScope };
             if (updater != null) {
