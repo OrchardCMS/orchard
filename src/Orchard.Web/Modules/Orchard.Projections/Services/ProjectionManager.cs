@@ -205,8 +205,8 @@ namespace Orchard.Projections.Services {
 
             var version = queryRecord.VersionScope.ToVersionOptions();
 
-            // Iterate over each filter group, but ignore empty ones, because they'd cause all content items to be returned.
-            foreach (var group in queryRecord.FilterGroups.Where(group => group.Filters.Count > 0)) {
+            // Iterate over each filter group and evaluate the filters.
+            foreach (var group in queryRecord.FilterGroups) {
                 var contentQuery = _contentManager.HqlQuery().ForVersion(version);
 
                 // Iterate over each filter to apply the alterations to the query object.
