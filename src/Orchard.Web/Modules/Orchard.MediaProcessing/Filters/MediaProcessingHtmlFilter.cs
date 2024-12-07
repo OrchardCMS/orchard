@@ -25,8 +25,7 @@ namespace Orchard.MediaProcessing.Filters {
         private MediaHtmlFilterSettingsPart _settingsPart;
         private static readonly Regex _imageTagRegex = new Regex(@"<img\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly ConcurrentDictionary<string, Regex> _attributeRegexes = new ConcurrentDictionary<string, Regex>();
-        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _attributeValues =
-            new ConcurrentDictionary<string, ConcurrentDictionary<string, string>>();
+        private static readonly ConcurrentDictionary<string, string> _attributeValues = new ConcurrentDictionary<string, string>();
         private static readonly Dictionary<string, string> _validExtensions = new Dictionary<string, string> {
             { ".jpeg", "jpg" }, // For example: .jpeg supports compression (quality), format to 'jpg'.
             { ".jpg", "jpg"  },
@@ -177,8 +176,7 @@ namespace Orchard.MediaProcessing.Filters {
 
         private string GetAttributeValue(string tag, string attributeName) =>
             _attributeValues
-                .GetOrAdd(tag, _ => new ConcurrentDictionary<string, string>())
-                .GetOrAdd(attributeName, _ => {
+                .GetOrAdd($"{tag}_{attributeName}", _ => {
                     var match = GetAttributeRegex(attributeName).Match(tag);
                     return match.Success ? match.Groups[1].Value : null;
                 });
