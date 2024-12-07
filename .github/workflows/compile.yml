@@ -16,13 +16,13 @@ jobs:
         shell: pwsh
     runs-on: windows-latest
     steps:
-      - name: Clone repository
+      - name: Clone Repository
         uses: actions/checkout@v4.1.1
 
-      - name: Restore NuGet packages
+      - name: Restore NuGet Packages
         run: nuget restore src/Orchard.sln
 
-      - name: Add msbuild to PATH
+      - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
       - name: Compile
@@ -31,14 +31,14 @@ jobs:
       - name: Test
         run: msbuild Orchard.proj /m /v:minimal /t:Test
 
-      - name: Run Orchard setup
+      - name: Run Orchard Setup with Orchard.exe
         run: |
           $commandFile = 'src/Orchard.Web/bin/setup-commands.txt'
           New-Item -Path $commandFile -ItemType File -Force
           Set-Content -Path $commandFile -Value 'setup /SiteName:Orchard /AdminUsername:admin /AdminPassword:Password1! /DatabaseProvider:SqlCe /Recipe:Default'
           & 'src/Orchard.Web/bin/Orchard.exe' @$commandFile
 
-      - name: Run code generation
+      - name: Run Code Generation
         run: |
           $commandFile = 'src/Orchard.Web/bin/codegen-commands.txt'
           New-Item -Path $commandFile -ItemType File -Force
@@ -50,17 +50,17 @@ jobs:
           '@
           & 'src/Orchard.Web/bin/Orchard.exe' @$commandFile
 
-      - name: Compile with generated projects
+      - name: Compile Again with Generated Projects
         run: msbuild Orchard.proj /m /v:minimal /t:Compile /p:TreatWarningsAsErrors=true -WarnAsError /NoWarn:CS2008
 
   compile-node:
-    name: Compile client-side assets
+    name: Compile Client-side Assets
     defaults:
       run:
         shell: pwsh
     runs-on: windows-latest
     steps:
-      - name: Clone repository
+      - name: Clone Repository
         uses: actions/checkout@v4.1.1
 
       - name: Setup NodeJS
@@ -68,7 +68,7 @@ jobs:
         with:
           node-version: '7'
 
-      - name: Setup NPM packages
+      - name: Setup NPM Packages
         working-directory: ./src
         run: |
           npm install --loglevel warn
@@ -77,7 +77,7 @@ jobs:
           $gulpVersion = (Get-Content Package.json -Raw | ConvertFrom-Json).devDependencies.gulp
           Start-Process npm -NoNewWindow -Wait -ArgumentList "install gulp@$gulpVersion -g --loglevel warn"
 
-      - name: Rebuild client-side assets
+      - name: Rebuild Client-side Assets
         working-directory: ./src
         run: |
           gulp rebuild
