@@ -31,7 +31,7 @@ jobs:
       - name: Test
         run: msbuild Orchard.proj /m /v:minimal /t:Test
 
-      - name: Test Setup With SpecFlow
+      - name: Test Setup with SpecFlow
         run: |
           $nunitConsole = (Get-ChildItem -Path 'src/packages' -Recurse -Filter 'nunit-console.exe' | Select-Object -Last 1).FullName
           & $nunitConsole 'build/Compile/Orchard.Specs.dll' /xml='build/Orchard.Specs.xml' /run=Orchard.Specs.SetupFeature.RootAndSetupFolderShowsSetupScreenAndFormValuesAreValidated
