@@ -168,6 +168,11 @@ namespace Orchard.Projections.Controllers {
 
             viewModel.FilterGroups = filterGroupEntries;
 
+            if (viewModel.FilterGroups.Any(group => group.Filters.Count() == 0)) {
+                _services.Notifier.Warning(
+                    T("This Query has at least one empty filter group, which will cause all content items to be returned, unless the Projection using this Query limits the number of content items displayed."));
+            }
+
             #endregion
 
             #region Load Sort criterias

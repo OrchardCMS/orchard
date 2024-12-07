@@ -355,6 +355,12 @@ namespace Orchard.Projections.Drivers {
                 updater.AddModelError("PagerSuffix", T("Suffix should not contain special characters."));
             }
 
+            if (model.Items == 0
+                && (part.Record.QueryPartRecord?.FilterGroups.Any(group => group.Filters.Count == 0) ?? false)) {
+                _orchardServices.Notifier.Warning(
+                    T("The selected Query has at least one empty filter group, which causes all content items to be returned. It is recommended to limit the number of content items queried by setting the 'Items to display' field to a non-zero value."));
+            }
+
             return Editor(part, shapeHelper);
         }
 
