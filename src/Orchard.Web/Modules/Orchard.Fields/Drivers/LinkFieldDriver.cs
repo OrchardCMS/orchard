@@ -38,10 +38,10 @@ namespace Orchard.Fields.Drivers {
                 () => {
                     if (part.IsNew()) {
                         var settings = field.PartFieldDefinition.Settings.GetModel<LinkFieldSettings>();
-                        if (String.IsNullOrEmpty(field.Value)) {
+                        if (string.IsNullOrEmpty(field.Value)) {
                             field.Value = settings.DefaultValue;
                         }
-                        if (String.IsNullOrEmpty(field.Text)) {
+                        if (string.IsNullOrEmpty(field.Text)) {
                             field.Text = settings.TextDefaultValue;
                         }
                     }
@@ -53,41 +53,30 @@ namespace Orchard.Fields.Drivers {
             if (updater.TryUpdateModel(field, GetPrefix(field, part), null, null)) {
                 var settings = field.PartFieldDefinition.Settings.GetModel<LinkFieldSettings>();
 
-                if (settings.Required && String.IsNullOrWhiteSpace(field.Value)) {
-                    updater.AddModelError(GetPrefix(field, part), T("Url is required for {0}.", T(field.DisplayName)));
+                if (settings.Required && string.IsNullOrWhiteSpace(field.Value)) {
+                    updater.AddModelError(GetPrefix(field, part), T("URL is required for {0}.", T(field.DisplayName)));
                 }
-                else if (settings.LinkTextMode == LinkTextMode.Required && String.IsNullOrWhiteSpace(field.Text)) {
-                    updater.AddModelError(GetPrefix(field, part), T("Text is required for {0}.", T(field.DisplayName)));
-                }
-                else if (!String.IsNullOrWhiteSpace(field.Value)) {
-                    // Check if it's a valid URI, considering that there may be the link to an anchor only, e.g.,
-                    // field.Value = "#divId".
-                    // Take everything before the first "#" character and check if it's a valid URI. If there is no
-                    // character before the first "#", consider the value as a valid one (because it is a reference to
-                    // a div inside the same page).
-                    if (field.Value.StartsWith("#")) {
-                        // The field value is a tag id reference.
-                        // For HTML 5, a tag id is valid as long as it doesn't contain white spaces.
-                        if (field.Value.IndexOf(' ') >= 0) {
-                            updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid URL.", field.Value));
-                        }
-                    }
-                    else {
-                        var urlAndRef = field.Value.Split(new char[] { '#' }, 2);
+                else if (!string.IsNullOrWhiteSpace(field.Value)) {
+                    // If the URL contains a fragment identifier (#), find its index to validate the URL and fragment separately.
+                    var fragmentIndex = field.Value.IndexOf('#');
 
-                        // Since field value is a proper URL and not a tag id only, assume the first part of the array
-                        // is the actual URL to link to.
-                        if (!String.IsNullOrWhiteSpace(urlAndRef[0]) && !Uri.IsWellFormedUriString(urlAndRef[0], UriKind.RelativeOrAbsolute)) {
-                            updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid URL.", field.Value));
-                        }
-                        else if (urlAndRef.Length > 1) {
-                            // The second part of the URL is the id reference.
-                            // For HTML 5, a tag id is valid as long as it doesn't contain white spaces.
-                            if (urlAndRef[1].IndexOf(' ') >= 0) {
-                                updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid URL.", field.Value));
-                            }
-                        }
+                    // The URL is the part of the value before the fragment identifier (#).
+                    var url = fragmentIndex >= 0 ? field.Value.Substring(0, fragmentIndex) : field.Value;
+                    // If the provided value contains a URL (not just a fragment), check if it's a valid URI.
+                    if (!string.IsNullOrEmpty(url) && !Uri.IsWellFormedUriString(url, UriKind.RelativeOrAbsolute)) {
+                        updater.AddModelError(GetPrefix(field, part), T("'{0}' is an invalid URL.", url));
                     }
+
+                    // The fragment is the part of the value after the fragment identifier (#).
+                    var fragment = fragmentIndex >= 0 ? field.Value.Substring(fragmentIndex + 1) : null;
+                    // If the provided value contains a fragment, check if it contains spaces.
+                    if (!string.IsNullOrEmpty(fragment) && fragment.IndexOf(' ') >= 0) {
+                        updater.AddModelError(GetPrefix(field, part), T("'{0}' is an invalid URL fragment.", fragment));
+                    }
+                }
+
+                if (settings.LinkTextMode == LinkTextMode.Required && string.IsNullOrWhiteSpace(field.Text)) {
+                    updater.AddModelError(GetPrefix(field, part), T("Text is required for {0}.", T(field.DisplayName)));
                 }
             }
 
