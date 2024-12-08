@@ -261,7 +261,7 @@ namespace Orchard.Core.Navigation.Controllers {
 
             _contentManager.Publish(menuPart.ContentItem);
 
-            _notifier.Information(
+            _notifier.Success(
                 string.IsNullOrWhiteSpace(menuPart.MenuText)
                     ? string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
                         ? T("Your content has been published.")
@@ -283,7 +283,7 @@ namespace Orchard.Core.Navigation.Controllers {
 
             _contentManager.Unpublish(menuPart.ContentItem);
 
-            _notifier.Information(
+            _notifier.Success(
                 string.IsNullOrWhiteSpace(menuPart.MenuText)
                     ? string.IsNullOrWhiteSpace(menuPart.TypeDefinition.DisplayName)
                         ? T("Your content has been unpublished.")
@@ -341,7 +341,7 @@ namespace Orchard.Core.Navigation.Controllers {
                 returnUrl = Url.ItemDisplayUrl(contentItem);
             }
 
-            _notifier.Information(
+            _notifier.Success(
                 string.IsNullOrWhiteSpace(menuPart.MenuText)
                     ? string.IsNullOrWhiteSpace(contentItem.TypeDefinition.DisplayName)
                         ? T("Your content has been saved.")
