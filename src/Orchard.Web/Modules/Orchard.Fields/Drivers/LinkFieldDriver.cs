@@ -1,12 +1,10 @@
-﻿using Orchard.ContentManagement;
+﻿using System;
+using Orchard.ContentManagement;
 using Orchard.ContentManagement.Drivers;
 using Orchard.ContentManagement.Handlers;
 using Orchard.Fields.Fields;
 using Orchard.Fields.Settings;
 using Orchard.Localization;
-using System;
-using System.Collections.Generic;
-using System.Security.Policy;
 
 namespace Orchard.Fields.Drivers {
     public class LinkFieldDriver : ContentFieldDriver<LinkField> {
@@ -60,28 +58,33 @@ namespace Orchard.Fields.Drivers {
                 }
                 else if (settings.LinkTextMode == LinkTextMode.Required && String.IsNullOrWhiteSpace(field.Text)) {
                     updater.AddModelError(GetPrefix(field, part), T("Text is required for {0}.", T(field.DisplayName)));
-                } else if (!String.IsNullOrWhiteSpace(field.Value)) {
-                    // Check if it's a valid uri, considering that there may be the link to an anchor only
-                    // e.g.: field.Value = "#divId"
-                    // Take everything before the first "#" character and check if it's a valid uri.
-                    // If there is no character before the first "#", consider the value as a valid one (because it is a reference to a div inside the same page)
+                }
+                else if (!String.IsNullOrWhiteSpace(field.Value)) {
+                    // Check if it's a valid URI, considering that there may be the link to an anchor only, e.g.,
+                    // field.Value = "#divId".
+                    // Take everything before the first "#" character and check if it's a valid URI. If there is no
+                    // character before the first "#", consider the value as a valid one (because it is a reference to
+                    // a div inside the same page).
                     if (field.Value.StartsWith("#")) {
-                        // The field value is a tag id reference
-                        // For html 5, a tag id is valid as long as it doesn't contain white spaces
+                        // The field value is a tag id reference.
+                        // For HTML 5, a tag id is valid as long as it doesn't contain white spaces.
                         if (field.Value.IndexOf(' ') >= 0) {
-                            updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid url.", field.Value));
+                            updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid URL.", field.Value));
                         }
-                    } else {
+                    }
+                    else {
                         var urlAndRef = field.Value.Split(new char[] { '#' }, 2);
 
-                        // Since field value is a proper url and not a tag id only, assume the first part of the array is the actual url to link to
+                        // Since field value is a proper URL and not a tag id only, assume the first part of the array
+                        // is the actual URL to link to.
                         if (!String.IsNullOrWhiteSpace(urlAndRef[0]) && !Uri.IsWellFormedUriString(urlAndRef[0], UriKind.RelativeOrAbsolute)) {
-                            updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid url.", field.Value));
-                        } else if (urlAndRef.Length > 1) {
-                            // The second part of the url is the id reference
-                            // For html 5, a tag id is valid as long as it doesn't contain white spaces
+                            updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid URL.", field.Value));
+                        }
+                        else if (urlAndRef.Length > 1) {
+                            // The second part of the URL is the id reference.
+                            // For HTML 5, a tag id is valid as long as it doesn't contain white spaces.
                             if (urlAndRef[1].IndexOf(' ') >= 0) {
-                                updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid url.", field.Value));
+                                updater.AddModelError(GetPrefix(field, part), T("{0} is an invalid URL.", field.Value));
                             }
                         }
                     }
@@ -112,7 +115,7 @@ namespace Orchard.Fields.Drivers {
         protected override void Describe(DescribeMembersContext context) {
             context
                 .Member("Text", typeof(string), T("Text"), T("The text of the link."))
-                .Member(null, typeof(string), T("Url"), T("The url of the link."))
+                .Member(null, typeof(string), T("Url"), T("The URL of the link."))
                 .Enumerate<LinkField>(() => field => new[] { field.Value });
         }
     }
