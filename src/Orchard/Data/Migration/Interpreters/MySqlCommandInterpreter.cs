@@ -91,6 +91,27 @@ namespace Orchard.Data.Migration.Interpreters {
             using (var sqlCommand = session.Connection.CreateCommand()) {
                 var columnNames = String.Join(", ", command.ColumnNames.Select(c => string.Format("'{0}'", c)));
                 var tableName = PrefixTableName(command.TableName);
+                var columnList = command.ColumnNames.ToList();
+                var indexMaximumLenght = 767;
+                var longColumnNames = new List<string>();
+
+                if (columnList.Count > 1) {
+                    string sqlComplicatedIndexes = @"SELECT SUM(CHARACTER_MAXIMUM_LENGTH)  FROM INFORMATION_SCHEMA.COLUMNS 
+                               WHERE table_name = '{1}' AND COLUMN_NAME in  ({0}) AND TABLE_SCHEMA = '{2}' AND
+                                     (Data_type = 'varchar');";
+                    sqlComplicatedIndexes = string.Format(sqlComplicatedIndexes, columnNames, tableName, session.Connection.Database);
+                    sqlCommand.CommandText = sqlComplicatedIndexes;
+                    using (var reader = sqlCommand.ExecuteReader()) {
+                        reader.Read();
+                        if (!reader.IsDBNull(0)) {
+                            var characterMaximumLenght = reader.GetInt32(0);
+                            indexMaximumLenght -= characterMaximumLenght;
+                            if (indexMaximumLenght < 0) {
+                                throw new InvalidOperationException("Cannot create index because indexMaximumLenght less than 0");
+                            }
+                        }
+                    }
+                }
                 // check whether the index contains big nvarchar columns or text fields
                 string sql = @"SELECT  COLUMN_NAME  FROM INFORMATION_SCHEMA.COLUMNS 
                                WHERE table_name = '{1}' AND COLUMN_NAME in  ({0}) AND TABLE_SCHEMA = '{2}' AND
@@ -98,13 +119,19 @@ namespace Orchard.Data.Migration.Interpreters {
 
                 sql = string.Format(sql, columnNames, tableName, session.Connection.Database);
                 sqlCommand.CommandText = sql;
-
-                var columnList = command.ColumnNames.ToList();
                 using (var reader = sqlCommand.ExecuteReader()) {
                     // Provide prefix for string columns with length longer than 767
                     while (reader.Read()) {
                         var columnName = reader.GetString(0);
-                        columnList[columnList.IndexOf(columnName)] = string.Format("{0}(767)", columnName);
+                        longColumnNames.Add(columnName);
+                    }
+
+                }
+
+                if (longColumnNames.Count > 0) {
+                    var columnPrefixKeyPartLenght = indexMaximumLenght / longColumnNames.Count;
+                    foreach (var columnName in longColumnNames) {
+                        columnList[columnList.IndexOf(columnName)] = string.Format("{0}({1})", columnName, columnPrefixKeyPartLenght);
                     }
                 }
 
