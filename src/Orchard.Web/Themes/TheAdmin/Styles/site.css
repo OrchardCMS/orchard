@@ -1126,24 +1126,27 @@ html.dyn #submit-pager, html.dyn .apply-bulk-actions-auto { display:none; }
 /* Core Contents and Orchard.PublishLater */
 
 .edit-item-sidebar fieldset {
-    margin:0;
-    padding:0;
+    margin: 0;
+    padding: 0;
+    clear: none;
+    float: left;
 }
 
-fieldset.publish-button, fieldset.delete-button, fieldset.save-button {
-    clear:none;
-    float:left;
+.edit-item-sidebar fieldset:not(:first-child) {
+    margin-left: 12px;
 }
-fieldset.save-button {
-    clear:left;
+
+.edit-item-sidebar fieldset:first-child {
+    clear: left;
 }
-fieldset.publish-button {
-    margin: 0 12px 0 0;
-    padding: 0 12px;
-    border-right:1px solid #ccc;
+
+fieldset.publish-button, fieldset.unpublish-button {
+    padding-right: 12px;
+    border-right: 1px solid #ccc;
 }
+
 fieldset.delete-button {
-    margin: 0 0 0 12px;
+    float: right;
 }
 
 /* Dashboard */
@@ -1495,17 +1498,29 @@ html.dir-rtl {
     margin-left:inherit;
     margin-right:10px;
 }
-.dir-rtl fieldset.publish-button, fieldset.delete-button, .dir-rtl fieldset.save-button {
-    float:right;
+
+.dir-rtl .edit-item-sidebar fieldset {
+    float: right;
 }
-.dir-rtl fieldset.save-button {
-    clear:right;
+
+.dir-rtl .edit-item-sidebar fieldset:first-child {
+    clear: right;
 }
-.dir-rtl fieldset.publish-button {
-    margin: 0 0 0 12px ;
+
+.dir-rtl .edit-item-sidebar fieldset:not(:first-child) {
+    margin-left: 0;
+    margin-right: 12px;
 }
+
+.dir-rtl fieldset.publish-button, fieldset.unpublish-button {
+    padding-right: 0;
+    border-right: none;
+    padding-left: 12px;
+    border-left: 1px solid #ccc;
+}
+
 .dir-rtl fieldset.delete-button {
-    margin: 0 12px 0 0;
+    float: left;
 }
 
 .content-rtl .permalink input.text {
