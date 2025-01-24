@@ -11,6 +11,7 @@
     <RootNamespace>Orchard</RootNamespace>
     <AssemblyName>Orchard.Framework</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <LangVersion>7.3</LangVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -41,12 +42,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <LangVersion>latest</LangVersion>
     <CodeAnalysisRuleSet>..\OrchardBasicCorrectness.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <NoWarn>
-    </NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -55,7 +53,6 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <LangVersion>latest</LangVersion>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
     <NoWarn>0436</NoWarn>
@@ -86,8 +83,8 @@
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NHibernate, Version=4.1.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
       <HintPath>..\packages\NHibernate.4.1.2.4000\lib\net40\NHibernate.dll</HintPath>
@@ -161,6 +158,7 @@
     <Compile Include="Data\Migration\Schema\DropUniqueConstraintCommand.cs" />
     <Compile Include="Environment\Extensions\Models\LifecycleStatus.cs" />
     <Compile Include="Environment\ShellBuilders\ICompositionStrategy.cs" />
+    <Compile Include="FileSystems\Media\InvalidNameCharacterException.cs" />
     <Compile Include="Mvc\ModelBinders\BooleanBinderProvider.cs" />
     <Compile Include="Mvc\Updater.cs" />
     <Compile Include="Recipes\Models\ConfigurationContext.cs" />
@@ -687,6 +685,7 @@
     <Compile Include="Messaging\Services\IMessageManager.cs" />
     <Compile Include="Messaging\Services\IMessagingChannel.cs" />
     <Compile Include="IWorkContextAccessor.cs" />
+    <Compile Include="Utility\Extensions\NameValueCollectionExtensions.cs" />
     <Compile Include="Utility\Extensions\VirtualPathProviderExtensions.cs" />
     <Compile Include="Utility\NamedReaderWriterLock.cs" />
     <Compile Include="Utility\ReflectionHelper.cs" />

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Linq;
-using Orchard.ContentManagement;
 using Orchard.ContentManagement.MetaData;
 using Orchard.Core.Common.Models;
 using Orchard.Core.Contents.Extensions;
@@ -15,13 +14,16 @@ namespace Orchard.Projections {
     public class Migrations : DataMigrationImpl {
         private readonly IRepository<MemberBindingRecord> _memberBindingRepository;
         private readonly IRepository<LayoutRecord> _layoutRepository;
-
+        private readonly IRepository<FilterRecord> _filterRepository;
 
         public Migrations(
             IRepository<MemberBindingRecord> memberBindingRepository,
-            IRepository<LayoutRecord> layoutRepository) {
+            IRepository<LayoutRecord> layoutRepository,
+            IRepository<FilterRecord> filterRepository) {
             _memberBindingRepository = memberBindingRepository;
             _layoutRepository = layoutRepository;
+            _filterRepository = filterRepository;
+
             T = NullLocalizer.Instance;
         }
 
@@ -70,17 +72,7 @@ namespace Orchard.Projections {
             SchemaBuilder.CreateTable("FieldIndexPartRecord", table => table.ContentPartRecord());
 
             //Adds indexes for better performances in queries
-            SchemaBuilder.AlterTable("StringFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("StringFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
-
-            SchemaBuilder.AlterTable("IntegerFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("IntegerFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
-
-            SchemaBuilder.AlterTable("DoubleFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("DoubleFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
-
-            SchemaBuilder.AlterTable("DecimalFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("DecimalFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
+            AddPropertyNameAndFieldIndexPartRecordIdIndexes();
 
             // Query
 
@@ -285,7 +277,7 @@ namespace Orchard.Projections {
                 Description = T("The text from the Body part").Text
             });
 
-            return 6;
+            return 8;
         }
 
         public int UpdateFrom1() {
@@ -341,17 +333,7 @@ namespace Orchard.Projections {
             .AddColumn<decimal>("LatestValue"));
 
             //Adds indexes for better performances in queries
-            SchemaBuilder.AlterTable("StringFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("StringFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
-
-            SchemaBuilder.AlterTable("IntegerFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("IntegerFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
-
-            SchemaBuilder.AlterTable("DoubleFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("DoubleFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
-
-            SchemaBuilder.AlterTable("DecimalFieldIndexRecord", table => table.CreateIndex("IX_PropertyName", new string[] { "PropertyName" }));
-            SchemaBuilder.AlterTable("DecimalFieldIndexRecord", table => table.CreateIndex("IX_FieldIndexPartRecord_Id", new string[] { "FieldIndexPartRecord_Id" }));
+            AddPropertyNameAndFieldIndexPartRecordIdIndexes();
 
             SchemaBuilder.AlterTable("QueryPartRecord", table => table
                 .AddColumn<string>("VersionScope", c => c.WithLength(15)));
@@ -359,15 +341,72 @@ namespace Orchard.Projections {
         }
 
         public int UpdateFrom5() {
-            SchemaBuilder.AlterTable("LayoutRecord", t => t.AddColumn<string>("GUIdentifier",
-                     column => column.WithLength(68)));
+            SchemaBuilder.AlterTable("LayoutRecord", t => t
+                .AddColumn<string>("GUIdentifier", column => column.WithLength(68)));
 
             var layoutRecords = _layoutRepository.Table.Where(l => l.GUIdentifier == null || l.GUIdentifier == "").ToList();
             foreach (var layout in layoutRecords) {
-               layout.GUIdentifier = Guid.NewGuid().ToString();
+                layout.GUIdentifier = Guid.NewGuid().ToString();
             }
 
             return 6;
+        }
+
+        public int UpdateFrom6() {
+            // This casts a somewhat wide net, but filters can't be queried by the form they are using and different
+            // types of filters can (and do) use StringFilterForm. However, the "Operator" parameter's value being
+            // "ContainsAnyIfProvided" is very specific.
+            var formStateToReplace = "<Operator>ContainsAnyIfProvided</Operator>";
+            var filterRecordsToUpdate = _filterRepository.Table.Where(f => f.State.Contains(formStateToReplace)).ToList();
+            foreach (var filter in filterRecordsToUpdate) {
+                filter.State = filter.State.Replace(
+                    formStateToReplace,
+                    "<Operator>ContainsAny</Operator><IgnoreFilterIfValueIsEmpty>true</IgnoreFilterIfValueIsEmpty>");
+            }
+
+            return 7;
+        }
+
+        public int UpdateFrom7() {
+            SchemaBuilder.AlterTable("StringFieldIndexRecord", table => {
+                table.DropIndex("IX_PropertyName");
+                table.DropIndex("IX_FieldIndexPartRecord_Id");
+            });
+            SchemaBuilder.AlterTable("IntegerFieldIndexRecord", table => {
+                table.DropIndex("IX_PropertyName");
+                table.DropIndex("IX_FieldIndexPartRecord_Id");
+            });
+            SchemaBuilder.AlterTable("DoubleFieldIndexRecord", table => {
+                table.DropIndex("IX_PropertyName");
+                table.DropIndex("IX_FieldIndexPartRecord_Id");
+            });
+            SchemaBuilder.AlterTable("DecimalFieldIndexRecord", table => {
+                table.DropIndex("IX_PropertyName");
+                table.DropIndex("IX_FieldIndexPartRecord_Id");
+            });
+
+            AddPropertyNameAndFieldIndexPartRecordIdIndexes();
+
+            return 8;
+        }
+
+        private void AddPropertyNameAndFieldIndexPartRecordIdIndexes() {
+            SchemaBuilder.AlterTable("StringFieldIndexRecord", table => {
+                table.CreateIndex("IDX_StringFieldIndexRecord_PropertyName", "PropertyName");
+                table.CreateIndex("IDX_StringFieldIndexRecord_FieldIndexPartRecord_Id", "FieldIndexPartRecord_Id");
+            });
+            SchemaBuilder.AlterTable("IntegerFieldIndexRecord", table => {
+                table.CreateIndex("IDX_IntegerFieldIndexRecord_PropertyName", "PropertyName");
+                table.CreateIndex("IDX_IntegerFieldIndexRecord_FieldIndexPartRecord_Id", "FieldIndexPartRecord_Id");
+            });
+            SchemaBuilder.AlterTable("DoubleFieldIndexRecord", table => {
+                table.CreateIndex("IDX_DoubleFieldIndexRecord_PropertyName", "PropertyName");
+                table.CreateIndex("IDX_DoubleFieldIndexRecord_FieldIndexPartRecord_Id", "FieldIndexPartRecord_Id");
+            });
+            SchemaBuilder.AlterTable("DecimalFieldIndexRecord", table => {
+                table.CreateIndex("IDX_DecimalFieldIndexRecord_PropertyName", "PropertyName");
+                table.CreateIndex("IDX_DecimalFieldIndexRecord_FieldIndexPartRecord_Id", "FieldIndexPartRecord_Id");
+            });
         }
     }
 }
